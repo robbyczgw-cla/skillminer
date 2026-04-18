@@ -12,3 +12,5 @@ config/skill-miner.config.local.json
 
 # OS
 .DS_Store
+.env
+*.env
