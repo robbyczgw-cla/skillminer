@@ -1,6 +1,6 @@
 ---
 name: skillminer
-version: 0.1.7
+version: 0.2.0
 description: "Suggest reusable skills from recurring local memory patterns. Keeps a human review gate, drafts only to skills/_pending/, defaults to the local OpenClaw runner, and supports an optional Claude fallback. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
 metadata:
   openclaw:
