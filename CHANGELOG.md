@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.3
+- Fix path inconsistency: skill-miner → skillminer in all prompt and script references
+
 ## 0.1.2
 - Remove FORGE_STATE env override — simplifies security surface
 
