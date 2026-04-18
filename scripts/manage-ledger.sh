@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # manage-ledger.sh — deterministic ledger transitions for skill-miner
 #
-# v0.1.1 — schema 0.3
+# v0.1.0 — schema 0.3
 #
 # Usage:
 #   manage-ledger.sh accept    <id>
