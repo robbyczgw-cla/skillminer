@@ -22,6 +22,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
   CONFIG_FILE="$FORGE_DIR/config/skill-miner.config.json"
 fi
 OC_AGENT="$(jq -r '.runner.openclaw_agent // "main"' "$CONFIG_FILE" 2>/dev/null || echo 'main')"
+MAX_BUDGET_USD="$(jq -r '.scan.maxBudgetUsd // 3' "$CONFIG_FILE" 2>/dev/null || echo '3')"
 
 # Write temp prompt file — inject CLAWD_DIR preamble (OC agent doesn't inherit env vars)
 PROMPT_FILE="$(mktemp /tmp/forge-write-prompt.XXXXXX.md)"
@@ -29,8 +30,9 @@ PROMPT_FILE="$(mktemp /tmp/forge-write-prompt.XXXXXX.md)"
   printf '> **Runtime preamble (injected by run-morning-write.sh):**\n'
   printf '> `CLAWD_DIR=%s` — use this as the authoritative CLAWD_DIR value throughout; skip Step 0 MISSING check (env var is not available in the agent session, but this path is confirmed valid).\n' \
     "$CLAWD_DIR"
-  printf '> `FORGE_DIR=%s` — use this as the authoritative installed skill path throughout; do not derive it from `CLAWD_DIR`.\n\n' \
+  printf '> `FORGE_DIR=%s` — use this as the authoritative installed skill path throughout; do not derive it from `CLAWD_DIR`.\n' \
     "$FORGE_DIR"
+  printf '> `scan.maxBudgetUsd=%s` — use this for any Claude fallback budget reference.\n\n' "$MAX_BUDGET_USD"
   cat "$FORGE_DIR/prompts/skill-writer.md"
 } > "$PROMPT_FILE"
 
@@ -59,7 +61,7 @@ elif [ "$FORGE_RUNNER" = "claude" ]; then
     --model sonnet \
     --effort high \
     --permission-mode auto \
-    --max-budget-usd 3 \
+    --max-budget-usd "$MAX_BUDGET_USD" \
     < "$PROMPT_FILE" >> "$LOG" 2>&1
 else
   echo "ERROR: unknown FORGE_RUNNER=$FORGE_RUNNER (expected: openclaw | claude)" >> "$LOG"

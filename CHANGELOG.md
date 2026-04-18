@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0
+- Rewrite intro — honest language: optional local scan, no auto-activate, no notifications by default, Claude fallback is external
+- Unify naming — Scout/Scribe removed from all user-facing docs, skillminer is the product, `forge` is the command
+- Add `setup.sh` — bootstraps state.json, copies config, prints scheduler commands. `bash setup.sh` just works
+- Fix notifications mismatch — default is off everywhere, local review files still written regardless
+- Wire thresholds — `config/skill-miner.config.json` → `run-nightly-scan.sh` → nightly prompt. Config now actually drives behavior
+- Shorten prompts — more determinism in jq/shell, less LLM prose
+- Resolve writer-prompt conflict — step-preservation is now explicit verbatim, no "clean up grammar" ambiguity
+- Rework quickstart — manual test first, then enable cron. Testable before automated
+
 ## 0.1.7
 - Normalize all skill-miner → skillminer references across scripts, prompts, docs
 - Rename cron jobs to skillminer-nightly-scan / skillminer-morning-write

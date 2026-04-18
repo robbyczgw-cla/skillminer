@@ -1,17 +1,15 @@
 ---
 name: skillminer
-version: 0.1.7
-description: "Autonomous skill proposal system (OpenClaw runner edition). Scans memory for recurring work patterns and drafts skills into skills/_pending/ for human review. Uses openclaw agent --message as runner; falls back to claude --print via FORGE_RUNNER env. Schema 0.3 ledger with a human review gate. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
+version: 0.2.0
+description: "Suggest reusable skills from recurring local memory patterns. Keeps a human review gate, drafts only to skills/_pending/, defaults to the local OpenClaw runner, and supports an optional Claude fallback. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
 metadata:
   openclaw:
     requires:
       bins: ["jq", "bash", "date", "openclaw"]
       env: ["CLAWD_DIR"]
-    note: "The skill auto-detects its install location. CLAWD_DIR defaults to ~/clawd if unset and is used only for workspace memory files plus skills/_pending/ output. Set FORGE_RUNNER=claude to use Claude Code CLI (requires Anthropic credentials). Never activates skills — always drafts to _pending/ for human promotion."
+    note: "The skill auto-detects its install location. CLAWD_DIR defaults to ~/clawd if unset and is used only for workspace memory files plus skills/_pending/ output. Set FORGE_RUNNER=claude to use Claude Code CLI with external execution. Never activates skills automatically."
 triggers:
   - "skill forge"
-  - "propose a skill"
-  - "what skills should I have"
   - "skill candidates"
   - "what patterns have I been doing"
   - "forge me a skill"
@@ -27,60 +25,53 @@ triggers:
   - "was hat skillminer gefunden"
   - "annehmen als skill"
   - "ablehnen skill"
-  - "letzten forge scan"
+  - "letzten skillminer scan"
 ---
 
 # skillminer ⚒️
 
-Stop doing the same thing three times. Let the skill notice — and propose a fix.
+skillminer suggests reusable skills from recurring work in your local memory files.
 
-skillminer watches your daily conversation memory and detects recurring task patterns — things you ask your AI assistant to do again and again. When a pattern crosses the threshold, it drafts a new skill proposal for your review. You decide what becomes real.
+## What makes it trustworthy
 
-✨ What Makes This Different?
-- **Zero auto-activation** — nothing happens without your explicit OK
-- **Pattern detection, not guesswork** — needs 3+ occurrences across 2+ days before proposing
-- **Drafts real SKILL.md files** — ready to promote directly to your live skills/
-- **Runs while you sleep** — nightly scan at 04:00, draft ready by 10:00
-- **Fully configurable** — scan window, thresholds, notifications, runner
+- Human gate first, always
+- Drafts go to `skills/_pending/`, never live skills
+- Local OpenClaw runner by default
+- Claude fallback is optional and external
+- Notifications are off by default
+- Review files are written locally even when notifications stay off
 
-🚀 Quick Start
+## Quick start
+
 ```bash
-# Via ClawHub (recommended)
 openclaw skills install skillminer
-
-# Or manually
-git clone https://github.com/robbyczgw-cla/skillminer.git \
-  "${CLAWD_DIR:-$HOME/clawd}/skills/skillminer"
+cd "${CLAWD_DIR:-$HOME/clawd}/skills/skillminer"
+bash setup.sh
+CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash scripts/run-nightly-scan.sh
 ```
-Then bootstrap state and register two cron jobs — full instructions in [USER_GUIDE.md](USER_GUIDE.md).
 
-Once running:
-- Say **"forge show"** to see current candidates
-- Say **"forge accept \<slug\>"** — skill draft arrives at 10:00
-- Say **"forge reject \<slug\>"** to dismiss with 30-day cooldown
+If the manual scan looks good, add the printed scheduler jobs.
 
-💬 Natural Language Commands
-Talk to your assistant — all commands work in English and German:
-- `forge show` / `skill candidates zeigen`
-- `forge accept verify-bindings-post-patch`
+## Commands
+
+skillminer is the product. `forge` is the command prefix.
+
+- `forge show`
+- `forge review`
+- `forge accept <slug>`
 - `forge reject <slug> "reason"`
-- `forge defer <slug>` — check again later
-- `forge silence <slug>` — permanent veto
-- `forge review` — read the latest scan report
+- `forge defer <slug> "reason"`
+- `forge silence <slug> "reason"`
+- `forge unsilence <slug>`
+- `forge promote <slug>`
 
-📋 How It Works
+## Flow
+
 ```
-04:00  Nightly scan runs
-       → reads last 10 days of conversation memory
-       → clusters recurring patterns
-       → sends you a review notification
-
-       YOU DECIDE: accept / reject / defer / silence
-
-10:00  Morning write runs
-       → drafts SKILL.md → skills/_pending/<slug>/
-       → you promote manually to live skills/
+nightly scan  -> review file, optional notification
+human decision -> accept / reject / defer / silence
+morning write -> draft into skills/_pending/
+human promote -> move draft into live skills/
 ```
 
-Zero auto-activation. You stay in control.
-
+See [USER_GUIDE.md](USER_GUIDE.md) for full usage.

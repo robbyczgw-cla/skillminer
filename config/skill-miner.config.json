@@ -15,7 +15,7 @@
     "cooldownDays": 30
   },
   "thresholds": {
-    "low": 2,
+    "low": 3,
     "medium": 4,
     "high": 6
   }
