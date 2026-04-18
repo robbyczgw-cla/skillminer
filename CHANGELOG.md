@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+- Declare CLAWD_DIR as required env var in SKILL.md metadata
+- Add warning on FORGE_STATE override in manage-ledger.sh
+
 ## 0.1.0 — Initial public release
 - Nightly memory scan (04:00) — detects recurring patterns across conversation history
 - Morning write (10:00) — drafts SKILL.md for accepted candidates into skills/_pending/
