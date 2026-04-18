@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.4
+- Fix FORGE_DIR path in run-nightly-scan.sh and run-morning-write.sh (skill-miner → skillminer)
+
 ## 0.1.3
 - Fix path inconsistency: skill-miner → skillminer in all prompt and script references
 

@@ -6,7 +6,7 @@
 set -euo pipefail
 
 export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}"
-FORGE_DIR="$CLAWD_DIR/skills/skill-miner"
+FORGE_DIR="$CLAWD_DIR/skills/skillminer"
 LOG_DIR="$FORGE_DIR/state/logs"
 mkdir -p "$LOG_DIR"
 
