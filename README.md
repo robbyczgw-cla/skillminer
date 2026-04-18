@@ -1,6 +1,6 @@
-# skill-miner ⚒️
+# skillminer ⚒️
 
-> *Your AI notices what you keep doing. skill-miner turns it into skills.*
+> *Your AI notices what you keep doing. skillminer turns it into skills.*
 
 **Version:** 0.1.0 | **Runner:** OpenClaw-native (Claude CLI fallback) | **Schema:** 0.3
 
@@ -10,7 +10,7 @@
 
 ## What it does
 
-skill-miner scans your daily conversation memory and detects **recurring task patterns** — things you ask your AI assistant to do 3+ times across 2+ different days. When a pattern crosses that threshold, it proposes a new skill for your review. You decide what gets drafted. You decide what goes live. Nothing happens without your say.
+skillminer scans your daily conversation memory and detects **recurring task patterns** — things you ask your AI assistant to do 3+ times across 2+ different days. When a pattern crosses that threshold, it proposes a new skill for your review. You decide what gets drafted. You decide what goes live. Nothing happens without your say.
 
 Runs every night at 04:00. Zero auto-activation. You stay in control.
 
@@ -55,11 +55,11 @@ Runs every night at 04:00. Zero auto-activation. You stay in control.
 
 **Clone into your workspace:**
 ```bash
-git clone https://github.com/robbyczgw-cla/skill-miner.git \
+git clone https://github.com/robbyczgw-cla/skillminer.git \
   "${CLAWD_DIR:-$HOME/clawd}/skills/skill-miner"
 ```
 
-> ClawHub install coming soon: `openclaw skills install skill-miner`
+> ClawHub install coming soon: `openclaw skills install skillminer`
 
 **Bootstrap state:**
 ```bash
