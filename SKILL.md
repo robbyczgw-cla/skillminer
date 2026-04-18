@@ -10,8 +10,6 @@ metadata:
     note: "The skill auto-detects its install location. CLAWD_DIR defaults to ~/clawd if unset and is used only for workspace memory files plus skills/_pending/ output. Set FORGE_RUNNER=claude to use Claude Code CLI with external execution. Never activates skills automatically."
 triggers:
   - "skill forge"
-  - "propose a skill"
-  - "what skills should I have"
   - "skill candidates"
   - "what patterns have I been doing"
   - "forge me a skill"
