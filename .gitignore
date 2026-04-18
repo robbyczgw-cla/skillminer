@@ -1,0 +1,14 @@
+# Runtime state — never commit
+state/
+!state/.gitkeep
+state/review/
+state/write-log/
+state/logs/
+state/.last-success
+state/.last-write
+
+# Local instance config (personal values)
+config/skill-miner.config.local.json
+
+# OS
+.DS_Store
