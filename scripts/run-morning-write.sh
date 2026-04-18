@@ -6,7 +6,8 @@
 set -euo pipefail
 
 export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}"
-FORGE_DIR="$CLAWD_DIR/skills/skillminer"
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+FORGE_DIR="$SKILL_DIR"
 LOG_DIR="$FORGE_DIR/state/logs"
 mkdir -p "$LOG_DIR"
 
@@ -26,8 +27,10 @@ OC_AGENT="$(jq -r '.runner.openclaw_agent // "main"' "$CONFIG_FILE" 2>/dev/null 
 PROMPT_FILE="$(mktemp /tmp/forge-write-prompt.XXXXXX.md)"
 {
   printf '> **Runtime preamble (injected by run-morning-write.sh):**\n'
-  printf '> `CLAWD_DIR=%s` — use this as the authoritative CLAWD_DIR value throughout; skip Step 0 MISSING check (env var is not available in the agent session, but this path is confirmed valid).\n\n'\
+  printf '> `CLAWD_DIR=%s` — use this as the authoritative CLAWD_DIR value throughout; skip Step 0 MISSING check (env var is not available in the agent session, but this path is confirmed valid).\n' \
     "$CLAWD_DIR"
+  printf '> `FORGE_DIR=%s` — use this as the authoritative installed skill path throughout; do not derive it from `CLAWD_DIR`.\n\n' \
+    "$FORGE_DIR"
   cat "$FORGE_DIR/prompts/skill-writer.md"
 } > "$PROMPT_FILE"
 

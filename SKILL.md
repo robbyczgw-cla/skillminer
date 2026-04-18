@@ -1,13 +1,13 @@
 ---
 name: skill-miner
-version: 0.1.4
+version: 0.1.5
 description: "Autonomous skill proposal system (OpenClaw runner edition). Scans memory for recurring work patterns and drafts skills into skills/_pending/ for human review. Uses openclaw agent --message as runner; falls back to claude --print via FORGE_RUNNER env. Schema 0.3 ledger with a human review gate. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
 metadata:
   openclaw:
     requires:
       bins: ["jq", "bash", "date", "openclaw"]
       env: ["CLAWD_DIR"]
-    note: "CLAWD_DIR defaults to ~/clawd if unset. Set FORGE_RUNNER=claude to use Claude Code CLI (requires Anthropic credentials). Never activates skills — always drafts to _pending/ for human promotion."
+    note: "The skill auto-detects its install location. CLAWD_DIR defaults to ~/clawd if unset and is used only for workspace memory files plus skills/_pending/ output. Set FORGE_RUNNER=claude to use Claude Code CLI (requires Anthropic credentials). Never activates skills — always drafts to _pending/ for human promotion."
 triggers:
   - "skill forge"
   - "propose a skill"
@@ -32,7 +32,7 @@ triggers:
 
 # Skill Miner ⚒️ (OpenClaw Edition)
 
-Requires `CLAWD_DIR` and the `openclaw` CLI in `PATH`. Set `FORGE_RUNNER=claude` to use Claude Code CLI instead. Never activates skills, it only drafts to `_pending/` for human promotion.
+Requires `CLAWD_DIR` and the `openclaw` CLI in `PATH`. The skill auto-detects its own install location, so `CLAWD_DIR` is only for your workspace memory files and `skills/_pending/` output. Set `FORGE_RUNNER=claude` to use Claude Code CLI instead. Never activates skills, it only drafts to `_pending/` for human promotion.
 
 > *Your AI notices what you keep doing. skill-miner turns it into skills.*
 
@@ -47,18 +47,22 @@ Nightly scan → pattern clustering → draft skill proposals. Human reviews, hu
    export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}"
    ```
 
+   The skill directory is auto-detected from the wrapper script path. `CLAWD_DIR` does not need to match the skill install location.
+
 2. Bootstrap state:
    ```bash
-   cp $CLAWD_DIR/skills/skill-miner/state-template.json \
-      $CLAWD_DIR/skills/skill-miner/state/state.json
+   cp $CLAWD_DIR/skills/skillminer/state-template.json \
+      $CLAWD_DIR/skills/skillminer/state/state.json
    ```
 
 3. Configure notifications and runner (optional):
    Copy `config/skill-miner.config.json` to `config/skill-miner.config.local.json` and customize your channel, thread, and agent values there. The scripts prefer `config/skill-miner.config.local.json` when present, and fall back to the defaults.
 
 4. Schedule two crons via the OpenClaw cron tool (ask your AI assistant):
-   - **Nightly scan:** `0 4 * * *` → `export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "$CLAWD_DIR/skills/skill-miner/scripts/run-nightly-scan.sh"`
-   - **Morning write:** `0 10 * * *` → `export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "$CLAWD_DIR/skills/skill-miner/scripts/run-morning-write.sh"`
+   - **Nightly scan:** `0 4 * * *` → `export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "$CLAWD_DIR/skills/skillminer/scripts/run-nightly-scan.sh"`
+   - **Morning write:** `0 10 * * *` → `export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "$CLAWD_DIR/skills/skillminer/scripts/run-morning-write.sh"`
+
+   For a local checkout under `$CLAWD_DIR/skills/skillminer/`, those paths are correct. For a ClawHub or custom install, point cron at the actual installed script path. The scripts themselves will auto-detect the skill directory once launched.
 
 5. Wake up to candidates in `state/review/YYYY-MM-DD.md`.
 
@@ -142,7 +146,7 @@ You can manage candidates conversationally. your AI assistant understands all of
 
 When you trigger any of the above:
 1. your AI assistant reads the current `state/state.json` to verify the slug exists and its current status.
-2. Runs `CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash "$CLAWD_DIR/skills/skill-miner/scripts/manage-ledger.sh" <command> <slug> ["<reason>"]`.
+2. Runs `CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash "<installed-skill-path>/scripts/manage-ledger.sh" <command> <slug> ["<reason>"]`.
 3. Confirms the outcome with the new status and any relevant next steps (e.g. "morning writer picks this up at 10:00").
 4. If the slug is ambiguous or doesn't exist, your AI assistant lists current candidates and asks which one you meant.
 

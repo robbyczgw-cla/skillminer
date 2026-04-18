@@ -13,8 +13,7 @@
 #   manage-ledger.sh show      [<id>]               # dump ledger summary or one entry
 #
 # Env:
-#   CLAWD_DIR     (required) — base workspace;
-#                 state path = "$CLAWD_DIR/skills/skillminer/state/state.json"
+#   CLAWD_DIR     (required) — base workspace (memory + drafted skills output)
 #
 # Deps: bash, jq. Deterministic, no LLM, no network.
 # Atomic via tmpfile + rename. Safe for single-human use (no locking for
@@ -52,10 +51,13 @@ command -v jq >/dev/null || die "jq is required"
 iso_now()   { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
 today_utc() { date -u +"%Y-%m-%d"; }
 
-# resolve state path -------------------------------------------------------
+# resolve paths ------------------------------------------------------------
+
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+FORGE_DIR="$SKILL_DIR"
 
 if [[ -n "${CLAWD_DIR:-}" ]]; then
-  STATE="$CLAWD_DIR/skills/skillminer/state/state.json"
+  STATE="$FORGE_DIR/state/state.json"
 else
   die "CLAWD_DIR not set"
 fi

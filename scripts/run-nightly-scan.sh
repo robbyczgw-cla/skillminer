@@ -6,7 +6,8 @@
 set -euo pipefail
 
 export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}"
-FORGE_DIR="$CLAWD_DIR/skills/skillminer"
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+FORGE_DIR="$SKILL_DIR"
 LOG_DIR="$FORGE_DIR/state/logs"
 mkdir -p "$LOG_DIR"
 
@@ -31,6 +32,7 @@ PROMPT_FILE="$(mktemp /tmp/forge-scan-prompt.XXXXXX.md)"
 {
   printf '> **Runtime preamble (injected by run-nightly-scan.sh):**\n'
   printf '> `CLAWD_DIR=%s` — use this as the authoritative CLAWD_DIR value throughout; skip Step 0 MISSING check (env var is not available in the agent session, but this path is confirmed valid).\n' "$CLAWD_DIR"
+  printf '> `FORGE_DIR=%s` — use this as the authoritative installed skill path throughout; do not derive it from `CLAWD_DIR`.\n' "$FORGE_DIR"
   printf '> `scan.windowDays=%s`, `scan.minOccurrences=%s`, `scan.minDistinctDays=%s`, `scan.cooldownDays=%s` — these are the active scan settings from `%s`; use them instead of prompt defaults wherever referenced below.\n\n' \
     "$SCAN_WINDOW_DAYS" "$SCAN_MIN_OCCURRENCES" "$SCAN_MIN_DISTINCT_DAYS" "$SCAN_COOLDOWN_DAYS" "$CONFIG_FILE"
   cat "$FORGE_DIR/prompts/nightly-scan.md"

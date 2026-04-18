@@ -2,7 +2,7 @@
 
 > *Your AI notices what you keep doing. skillminer turns it into skills.*
 
-**Version:** 0.1.4 | **Runner:** OpenClaw-native (Claude CLI fallback) | **Schema:** 0.3
+**Version:** 0.1.5 | **Runner:** OpenClaw-native (Claude CLI fallback) | **Schema:** 0.3
 
 *Your AI watches. Every night, without asking. It reads what you built, what you fixed, what you asked three times without noticing. Then, one morning, it says: "You keep doing this. Want it as a skill?"*
 
@@ -52,6 +52,8 @@ Runs every night at 04:00. Zero auto-activation. You stay in control.
 ## Installation
 
 > **`CLAWD_DIR`** is where OpenClaw keeps your workspace. Defaults to `~/clawd`. Set it in your shell env if your workspace is elsewhere.
+>
+> The skill auto-detects its install location. `CLAWD_DIR` is only needed to locate your memory files and `skills/_pending/` output.
 
 **Clone into your workspace:**
 ```bash
@@ -64,14 +66,14 @@ git clone https://github.com/robbyczgw-cla/skillminer.git \
 **Bootstrap state:**
 ```bash
 CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}"
-cp "$CLAWD_DIR/skills/skill-miner/state-template.json" \
-   "$CLAWD_DIR/skills/skill-miner/state/state.json"
+cp "$CLAWD_DIR/skills/skillminer/state-template.json" \
+   "$CLAWD_DIR/skills/skillminer/state/state.json"
 ```
 
 **Configure (optional but recommended):**
 ```bash
-cp "$CLAWD_DIR/skills/skill-miner/config/skill-miner.config.json" \
-   "$CLAWD_DIR/skills/skill-miner/config/skill-miner.config.local.json"
+cp "$CLAWD_DIR/skills/skillminer/config/skill-miner.config.json" \
+   "$CLAWD_DIR/skills/skillminer/config/skill-miner.config.local.json"
 ```
 Edit `skill-miner.config.local.json` with your values. This file is git-ignored and won't be overwritten on updates.
 
@@ -81,15 +83,17 @@ Use your local timezone in the cron configuration, for example `<Your/Timezone>`
 
 Nightly scan — `0 4 * * *` `<Your/Timezone>`:
 ```
-export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "$CLAWD_DIR/skills/skill-miner/scripts/run-nightly-scan.sh"
+export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "$CLAWD_DIR/skills/skillminer/scripts/run-nightly-scan.sh"
 ```
 
 Morning write — `0 10 * * *` `<Your/Timezone>`:
 ```
-export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "$CLAWD_DIR/skills/skill-miner/scripts/run-morning-write.sh"
+export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "$CLAWD_DIR/skills/skillminer/scripts/run-morning-write.sh"
 ```
 
 ---
+
+Those cron examples assume a local checkout at `$CLAWD_DIR/skills/skillminer/`. If you installed via ClawHub or placed the skill elsewhere, point cron at that actual script path. Once started, the scripts resolve the skill directory dynamically from their own location.
 
 ## Configuration
 
@@ -122,14 +126,14 @@ Commands, fuzzy matching, natural language interface, runner modes, manual dry-r
 
 **Scan didn't run / no notification:**
 ```bash
-cat "${CLAWD_DIR:-$HOME/clawd}/skills/skill-miner/state/logs/scan-YYYY-MM-DD.log"
-cat "${CLAWD_DIR:-$HOME/clawd}/skills/skill-miner/state/review/YYYY-MM-DD.md"
+cat "${CLAWD_DIR:-$HOME/clawd}/skills/skillminer/state/logs/scan-YYYY-MM-DD.log"
+cat "${CLAWD_DIR:-$HOME/clawd}/skills/skillminer/state/review/YYYY-MM-DD.md"
 ```
 
 **Nothing drafted at 10:00:**
 Make sure you accepted at least one candidate before 10:00, then check:
 ```bash
-cat "${CLAWD_DIR:-$HOME/clawd}/skills/skill-miner/state/state.json" | jq '.candidates'
+cat "${CLAWD_DIR:-$HOME/clawd}/skills/skillminer/state/state.json" | jq '.candidates'
 ```
 
 **State file corrupted:**

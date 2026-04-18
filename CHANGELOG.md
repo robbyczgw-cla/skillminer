@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5
+- Auto-detect the installed skill directory in all wrapper scripts and `manage-ledger.sh` via `BASH_SOURCE`, so the skill works from local checkouts and ClawHub installs.
+- Update prompts to treat `FORGE_DIR` as wrapper-injected instead of deriving it from `CLAWD_DIR`.
+- Clarify in `SKILL.md` and `README.md` that `CLAWD_DIR` is only for workspace memory files and `_pending/` output, while cron must point to the actual installed script path.
+
 ## 0.1.4
 - Fix FORGE_DIR path in run-nightly-scan.sh and run-morning-write.sh (skill-miner → skillminer)
 
