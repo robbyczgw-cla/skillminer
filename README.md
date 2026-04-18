@@ -61,7 +61,7 @@ git clone https://github.com/robbyczgw-cla/skillminer.git \
   "${CLAWD_DIR:-$HOME/clawd}/skills/skill-miner"
 ```
 
-> ClawHub install coming soon: `openclaw skills install skillminer`
+> Or via ClawHub: `openclaw skills install skillminer`
 
 **Bootstrap state:**
 ```bash
