@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.6
+- Rewrite SKILL.md body — benefit-focused, non-technical, quick start via ClawHub
+- Update Quick Start to include both ClawHub and manual git clone install methods
+
 ## 0.1.5
 - Auto-detect the installed skill directory in all wrapper scripts and `manage-ledger.sh` via `BASH_SOURCE`, so the skill works from local checkouts and ClawHub installs.
 - Update prompts to treat `FORGE_DIR` as wrapper-injected instead of deriving it from `CLAWD_DIR`.
