@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# manage-ledger.sh — deterministic ledger transitions for skill-miner
+# manage-ledger.sh — deterministic ledger transitions for skillminer
 #
 # v0.1.0 — schema 0.3
 #
@@ -18,7 +18,7 @@
 #
 # Deps: bash, jq. Deterministic, no LLM, no network.
 # Atomic via tmpfile + rename. Safe for single-human use (no locking for
-# concurrent writers — skill-miner does not have concurrent writers).
+# concurrent writers — skillminer does not have concurrent writers).
 #
 # Mutation effects:
 #   accept      — candidate stays in candidates[] with status=accepted; morning-write picks it up
