@@ -1,10 +1,10 @@
-# skill-miner — User Guide
+# skillminer — User Guide
 
-> Your AI watches what you keep doing. skill-miner turns it into skills.
+> Your AI watches what you keep doing. skillminer turns it into skills.
 
 ## How it works
 
-Every night at 04:00, skill-miner scans your last 10 days of conversation memory and looks for patterns — things you asked your AI assistant to do 3 or more times across multiple days. When a pattern is strong enough, it proposes a new skill for your review.
+Every night at 04:00, skillminer scans your last 10 days of conversation memory and looks for patterns — things you asked your AI assistant to do 3 or more times across multiple days. When a pattern is strong enough, it proposes a new skill for your review.
 
 You decide what becomes a real skill. Nothing is auto-activated.
 
@@ -69,7 +69,7 @@ Slug matching is fuzzy — "verify bindings", "verify-bindings", "bindings post 
 ```
 what skills should I have?
 what patterns have I been doing?
-was hat skill-miner gefunden?
+was hat skillminer gefunden?
 zeig mir skill kandidaten
 ja, verify-bindings als skill
 verify-bindings ablehnen
@@ -84,20 +84,20 @@ letzten forge scan zeigen
 
 **1. Copy the skill into your OpenClaw workspace:**
 ```bash
-cp -r skill-miner "$CLAWD_DIR/skills/"
+cp -r skillminer "$CLAWD_DIR/skills/"
 ```
 
 **2. Bootstrap state:**
 ```bash
 CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}"
-cp "$CLAWD_DIR/skills/skill-miner/state-template.json" \
-   "$CLAWD_DIR/skills/skill-miner/state/state.json"
+cp "$CLAWD_DIR/skills/skillminer/state-template.json" \
+   "$CLAWD_DIR/skills/skillminer/state/state.json"
 ```
 
 **3. Configure (optional):**
 ```bash
-cp "$CLAWD_DIR/skills/skill-miner/config/skill-miner.config.json" \
-   "$CLAWD_DIR/skills/skill-miner/config/skill-miner.config.local.json"
+cp "$CLAWD_DIR/skills/skillminer/config/skill-miner.config.json" \
+   "$CLAWD_DIR/skills/skillminer/config/skill-miner.config.local.json"
 ```
 Edit `skill-miner.config.local.json` with your values (Telegram channel, agent, etc.). This file is git-ignored and won't be overwritten on updates.
 
@@ -105,11 +105,11 @@ Edit `skill-miner.config.local.json` with your values (Telegram channel, agent, 
 - Use your local timezone in the cron configuration, for example `<Your/Timezone>`.
 - **Nightly scan:** `0 4 * * *` `<Your/Timezone>`
   ```
-  export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "$CLAWD_DIR/skills/skill-miner/scripts/run-nightly-scan.sh"
+  export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "$CLAWD_DIR/skills/skillminer/scripts/run-nightly-scan.sh"
   ```
 - **Morning write:** `0 10 * * *` `<Your/Timezone>`
   ```
-  export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "$CLAWD_DIR/skills/skill-miner/scripts/run-morning-write.sh"
+  export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "$CLAWD_DIR/skills/skillminer/scripts/run-morning-write.sh"
   ```
 
 ---
@@ -132,7 +132,7 @@ Edit `config/skill-miner.config.local.json`:
 ## Triggering a scan manually
 
 ```bash
-CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash skills/skill-miner/scripts/run-nightly-scan.sh
+CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash skills/skillminer/scripts/run-nightly-scan.sh
 ```
 
 ---
@@ -155,15 +155,15 @@ mv "$CLAWD_DIR/skills/_pending/my-skill" "$CLAWD_DIR/skills/"
 
 **No notification received:**
 ```bash
-cat "$CLAWD_DIR/skills/skill-miner/state/logs/scan-YYYY-MM-DD.log"
+cat "$CLAWD_DIR/skills/skillminer/state/logs/scan-YYYY-MM-DD.log"
 ```
 
 **Nothing was drafted at 10:00:**
 - Check that you accepted at least one candidate before 10:00
-- Check: `cat "$CLAWD_DIR/skills/skill-miner/state/state.json" | jq '.candidates'`
+- Check: `cat "$CLAWD_DIR/skills/skillminer/state/state.json" | jq '.candidates'`
 
 **Reset state (loses history):**
 ```bash
-cp "$CLAWD_DIR/skills/skill-miner/state-template.json" \
-   "$CLAWD_DIR/skills/skill-miner/state/state.json"
+cp "$CLAWD_DIR/skills/skillminer/state-template.json" \
+   "$CLAWD_DIR/skills/skillminer/state/state.json"
 ```

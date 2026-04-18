@@ -1,5 +1,5 @@
 #!/bin/bash
-# skill-miner morning writer wrapper — invoked by cron at 10:00
+# skillminer morning writer wrapper — invoked by cron at 10:00
 # OpenClaw edition: uses `openclaw agent --message` (or claude as fallback via FORGE_RUNNER).
 # No su - forge: OC isolated session provides sandboxing.
 
@@ -36,7 +36,7 @@ PROMPT_FILE="$(mktemp /tmp/forge-write-prompt.XXXXXX.md)"
 
 cd "$CLAWD_DIR"
 {
-  echo "=== skill-miner morning-write ==="
+  echo "=== skillminer morning-write ==="
   echo "started: $(date -u --iso-8601=seconds)"
   echo "CLAWD_DIR=$CLAWD_DIR"
   echo "FORGE_RUNNER=$FORGE_RUNNER"

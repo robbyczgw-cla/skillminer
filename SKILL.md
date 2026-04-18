@@ -1,5 +1,5 @@
 ---
-name: skill-miner
+name: skillminer
 version: 0.1.6
 description: "Autonomous skill proposal system (OpenClaw runner edition). Scans memory for recurring work patterns and drafts skills into skills/_pending/ for human review. Uses openclaw agent --message as runner; falls back to claude --print via FORGE_RUNNER env. Schema 0.3 ledger with a human review gate. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
 metadata:
@@ -24,7 +24,7 @@ triggers:
   - "forge promote"
   - "forge review"
   - "skill candidates zeigen"
-  - "was hat skill-miner gefunden"
+  - "was hat skillminer gefunden"
   - "annehmen als skill"
   - "ablehnen skill"
   - "letzten forge scan"

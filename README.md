@@ -18,9 +18,9 @@ Runs every night at 04:00. Zero auto-activation. You stay in control.
 
 ## Why would I want this?
 
-- You keep checking config bindings manually after every patch — skill-miner notices and proposes a `verify-bindings` skill to automate it.
+- You keep checking config bindings manually after every patch — skillminer notices and proposes a `verify-bindings` skill to automate it.
 - Every few days you ask your agent to clean up stale memory files — it flags that as a candidate and drafts a `weekly-memory-cleanup` skill.
-- You habitually verify cron job health after infrastructure changes — skill-miner surfaces that pattern and offers to codify it as a reusable check.
+- You habitually verify cron job health after infrastructure changes — skillminer surfaces that pattern and offers to codify it as a reusable check.
 
 ---
 
@@ -58,7 +58,7 @@ Runs every night at 04:00. Zero auto-activation. You stay in control.
 **Clone into your workspace:**
 ```bash
 git clone https://github.com/robbyczgw-cla/skillminer.git \
-  "${CLAWD_DIR:-$HOME/clawd}/skills/skill-miner"
+  "${CLAWD_DIR:-$HOME/clawd}/skills/skillminer"
 ```
 
 > Or via ClawHub: `openclaw skills install skillminer`

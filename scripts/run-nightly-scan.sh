@@ -1,5 +1,5 @@
 #!/bin/bash
-# skill-miner nightly scan wrapper — invoked by cron at 04:00
+# skillminer nightly scan wrapper — invoked by cron at 04:00
 # OpenClaw edition: uses `openclaw agent --message` (or claude as fallback via FORGE_RUNNER).
 # No su - forge: OC isolated session provides sandboxing.
 
@@ -40,7 +40,7 @@ PROMPT_FILE="$(mktemp /tmp/forge-scan-prompt.XXXXXX.md)"
 
 cd "$CLAWD_DIR"
 {
-  echo "=== skill-miner nightly-scan ==="
+  echo "=== skillminer nightly-scan ==="
   echo "started: $(date -u --iso-8601=seconds)"
   echo "CLAWD_DIR=$CLAWD_DIR"
   echo "FORGE_RUNNER=$FORGE_RUNNER"
