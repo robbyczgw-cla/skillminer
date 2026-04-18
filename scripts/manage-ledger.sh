@@ -15,7 +15,9 @@
 # Env:
 #   CLAWD_DIR     (required unless FORGE_STATE set) — base workspace;
 #                 state path = "$CLAWD_DIR/skills/skill-miner/state/state.json"
-#   FORGE_STATE   (optional) full override path to state.json
+#   FORGE_STATE   (optional) full override path to state.json.
+#                 ⚠️  Do NOT point this at unrelated or sensitive system files.
+#                 Prefer the default CLAWD_DIR-located state.json.
 #
 # Deps: bash, jq. Deterministic, no LLM, no network.
 # Atomic via tmpfile + rename. Safe for single-human use (no locking for

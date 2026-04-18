@@ -6,7 +6,8 @@ metadata:
   openclaw:
     requires:
       bins: ["jq", "bash", "date", "openclaw"]
-      note: "Requires CLAWD_DIR env var and openclaw CLI in PATH. Set FORGE_RUNNER=claude to use Claude Code CLI instead. Never activates skills — always drafts to _pending/ for human promotion."
+      env: ["CLAWD_DIR"]
+    note: "CLAWD_DIR defaults to ~/clawd if unset. Set FORGE_RUNNER=claude to use Claude Code CLI (requires Anthropic credentials). Never activates skills — always drafts to _pending/ for human promotion."
 triggers:
   - "skill forge"
   - "propose a skill"
