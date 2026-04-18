@@ -4,7 +4,7 @@
 
 **Version:** 0.1.7 | **Runner:** OpenClaw-native (Claude CLI fallback) | **Schema:** 0.3
 
-*Your AI watches. Every night, without asking. It reads what you built, what you fixed, what you asked three times without noticing. Then, one morning, it says: "You keep doing this. Want it as a skill?"*
+*Your AI analyzes every night. It reads what you built, what you fixed, what you asked three times without noticing. Then, one morning, it says: "You keep doing this. Want it as a skill?"*
 
 ---
 
