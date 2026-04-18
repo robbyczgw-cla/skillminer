@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.7
+- Normalize all skill-miner → skillminer references across scripts, prompts, docs
+- Rename cron jobs to skillminer-nightly-scan / skillminer-morning-write
+
 ## 0.1.6
 - Rewrite SKILL.md body — benefit-focused, non-technical, quick start via ClawHub
 - Update Quick Start to include both ClawHub and manual git clone install methods
