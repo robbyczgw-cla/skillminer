@@ -2,7 +2,7 @@
 
 > *Your AI notices what you keep doing. skillminer turns it into skills.*
 
-**Version:** 0.1.1 | **Runner:** OpenClaw-native (Claude CLI fallback) | **Schema:** 0.3
+**Version:** 0.1.2 | **Runner:** OpenClaw-native (Claude CLI fallback) | **Schema:** 0.3
 
 *Your AI watches. Every night, without asking. It reads what you built, what you fixed, what you asked three times without noticing. Then, one morning, it says: "You keep doing this. Want it as a skill?"*
 

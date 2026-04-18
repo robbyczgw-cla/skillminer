@@ -13,11 +13,8 @@
 #   manage-ledger.sh show      [<id>]               # dump ledger summary or one entry
 #
 # Env:
-#   CLAWD_DIR     (required unless FORGE_STATE set) — base workspace;
-#                 state path = "$CLAWD_DIR/skills/skill-miner/state/state.json"
-#   FORGE_STATE   (optional) full override path to state.json.
-#                 ⚠️  Do NOT point this at unrelated or sensitive system files.
-#                 Prefer the default CLAWD_DIR-located state.json.
+#   CLAWD_DIR     (required) — base workspace;
+#                 state path = "$CLAWD_DIR/skills/skillminer/state/state.json"
 #
 # Deps: bash, jq. Deterministic, no LLM, no network.
 # Atomic via tmpfile + rename. Safe for single-human use (no locking for
@@ -57,12 +54,10 @@ today_utc() { date -u +"%Y-%m-%d"; }
 
 # resolve state path -------------------------------------------------------
 
-if [[ -n "${FORGE_STATE:-}" ]]; then
-  STATE="$FORGE_STATE"
-elif [[ -n "${CLAWD_DIR:-}" ]]; then
-  STATE="$CLAWD_DIR/skills/skill-miner/state/state.json"
+if [[ -n "${CLAWD_DIR:-}" ]]; then
+  STATE="$CLAWD_DIR/skills/skillminer/state/state.json"
 else
-  die "CLAWD_DIR not set and FORGE_STATE not provided"
+  die "CLAWD_DIR not set"
 fi
 
 [[ -f "$STATE" ]] || die "state.json not found at $STATE"

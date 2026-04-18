@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.2
+- Remove FORGE_STATE env override — simplifies security surface
+
 ## 0.1.1
 - Declare CLAWD_DIR as required env var in SKILL.md metadata
 - Add warning on FORGE_STATE override in manage-ledger.sh
