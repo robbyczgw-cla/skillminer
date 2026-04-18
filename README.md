@@ -1,40 +1,32 @@
 # skillminer ⚒️
 
-> *Your AI notices what you keep doing. skillminer turns it into skills.*
+> Optional local memory scan that suggests reusable skills.
 
-**Version:** 0.1.7 | **Runner:** OpenClaw-native (Claude CLI fallback) | **Schema:** 0.3
+**Version:** 0.1.7 | **Runner:** OpenClaw-native by default, Claude CLI fallback optional | **Schema:** 0.3
 
-*Your AI watches. Every night, without asking. It reads what you built, what you fixed, what you asked three times without noticing. Then, one morning, it says: "You keep doing this. Want it as a skill?"*
+skillminer scans your local conversation memory for recurring task patterns and suggests skills you may want to keep. It is local by default, does not auto-activate skills, and does not send notifications unless you enable them. If you switch to the Claude fallback runner, that path is external.
 
 ---
 
 ## What it does
 
-skillminer scans your daily conversation memory and detects **recurring task patterns** — things you ask your AI assistant to do 3+ times across 2+ different days. When a pattern crosses that threshold, it proposes a new skill for your review. You decide what gets drafted. You decide what goes live. Nothing happens without your say.
+skillminer reads recent `memory/YYYY-MM-DD.md` files, looks for work you keep doing, and opens a review step for you. If you accept a candidate, the morning writer drafts a skill into `skills/_pending/<slug>/`. You review it and decide whether to promote it.
 
-Runs every night at 04:00. Zero auto-activation. You stay in control.
-
----
-
-## Why would I want this?
-
-- You keep checking config bindings manually after every patch — skillminer notices and proposes a `verify-bindings` skill to automate it.
-- Every few days you ask your agent to clean up stale memory files — it flags that as a candidate and drafts a `weekly-memory-cleanup` skill.
-- You habitually verify cron job health after infrastructure changes — skillminer surfaces that pattern and offers to codify it as a reusable check.
+Nothing goes live automatically.
 
 ---
 
 ## Pipeline
 
 ```
-04:00 — nightly-scan   reads 10 days of memory/YYYY-MM-DD.md
-                       clusters patterns, scores confidence
+04:00 — nightly scan   reads recent memory files
+                       detects recurring patterns
                        writes state/review/YYYY-MM-DD.md
-                       sends you a notification
+                       optional notification if enabled
                        ↓
         YOU DECIDE     accept / reject / defer / silence
                        ↓
-10:00 — morning-write  for each accepted candidate:
+10:00 — morning write  for each accepted candidate:
                        drafts SKILL.md → skills/_pending/<slug>/
                        you manually promote from _pending/ to live skills/
 ```
@@ -43,57 +35,81 @@ Runs every night at 04:00. Zero auto-activation. You stay in control.
 
 ## Requirements
 
-- OpenClaw (any recent version)
+- OpenClaw (recent version)
 - `bash`, `jq` on PATH
-- Claude CLI (`claude`) — optional, only needed for `FORGE_RUNNER=claude` fallback
+- Claude CLI (`claude`) only if you explicitly choose `FORGE_RUNNER=claude`
 
 ---
 
-## Installation
+## Quickstart
 
-> **`CLAWD_DIR`** is where OpenClaw keeps your workspace. Defaults to `~/clawd`. Set it in your shell env if your workspace is elsewhere.
->
-> The skill auto-detects its install location. `CLAWD_DIR` is only needed to locate your memory files and `skills/_pending/` output.
+> `CLAWD_DIR` is your OpenClaw workspace, default `~/clawd`.
 
-**Clone into your workspace:**
+**Install**
 ```bash
 git clone https://github.com/robbyczgw-cla/skillminer.git \
   "${CLAWD_DIR:-$HOME/clawd}/skills/skillminer"
 ```
 
-> Or via ClawHub: `openclaw skills install skillminer`
-
-**Bootstrap state:**
+Or via ClawHub:
 ```bash
-CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}"
-cp "$CLAWD_DIR/skills/skillminer/state-template.json" \
-   "$CLAWD_DIR/skills/skillminer/state/state.json"
+openclaw skills install skillminer
 ```
 
-**Configure (optional but recommended):**
+**Bootstrap in one step**
 ```bash
-cp "$CLAWD_DIR/skills/skillminer/config/skill-miner.config.json" \
-   "$CLAWD_DIR/skills/skillminer/config/skill-miner.config.local.json"
-```
-Edit `skill-miner.config.local.json` with your values. This file is git-ignored and won't be overwritten on updates.
-
-**Register two cron jobs in OpenClaw:**
-
-Use your local timezone in the cron configuration, for example `<Your/Timezone>`.
-
-Nightly scan — `0 4 * * *` `<Your/Timezone>`:
-```
-export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "$CLAWD_DIR/skills/skillminer/scripts/run-nightly-scan.sh"
+cd "${CLAWD_DIR:-$HOME/clawd}/skills/skillminer"
+bash setup.sh
 ```
 
-Morning write — `0 10 * * *` `<Your/Timezone>`:
+`setup.sh` will:
+- create `state/state.json` from `state-template.json` if needed
+- create `config/skill-miner.config.local.json` from the default config if needed
+- print the exact nightly-scan and morning-write scheduler commands for your install path
+
+**Run a manual test before scheduling anything**
+```bash
+CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash scripts/run-nightly-scan.sh
 ```
-export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "$CLAWD_DIR/skills/skillminer/scripts/run-morning-write.sh"
+
+Then inspect:
+```bash
+ls state/review/
+cat state/logs/scan-*.log | tail -n 40
 ```
+
+**Only after the manual test looks good, register the two scheduler jobs**
+
+Use your local timezone in the scheduler configuration, for example `<Your/Timezone>`.
+
+Nightly scan, `0 4 * * *` `<Your/Timezone>`:
+```bash
+export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "${CLAWD_DIR:-$HOME/clawd}/skills/skillminer/scripts/run-nightly-scan.sh"
+```
+
+Morning write, `0 10 * * *` `<Your/Timezone>`:
+```bash
+export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "${CLAWD_DIR:-$HOME/clawd}/skills/skillminer/scripts/run-morning-write.sh"
+```
+
+If you installed the skill elsewhere, use the real script paths that `setup.sh` prints.
 
 ---
 
-Those cron examples assume a local checkout at `$CLAWD_DIR/skills/skillminer/`. If you installed via ClawHub or placed the skill elsewhere, point cron at that actual script path. Once started, the scripts resolve the skill directory dynamically from their own location.
+## Commands
+
+skillminer is the product. `forge ...` is the command prefix it listens for.
+
+- `forge show`
+- `forge review`
+- `forge accept <slug>`
+- `forge reject <slug> "reason"`
+- `forge defer <slug> "reason"`
+- `forge silence <slug> "reason"`
+- `forge unsilence <slug>`
+- `forge promote <slug>`
+
+---
 
 ## Configuration
 
@@ -101,39 +117,49 @@ Edit `config/skill-miner.config.local.json`:
 
 | Key | Default | Description |
 |---|---|---|
-| `notifications.enabled` | `false` | Enable/disable notifications. |
-| `notifications.channel` | `null` | Channel for review notifications (`null` = disable) |
-| `notifications.threadId` | `null` | Thread/topic ID. `null` = main chat. |
-| `runner.default` | `"openclaw"` | `"openclaw"` or `"claude"`. Override with `FORGE_RUNNER` env var. |
-| `runner.openclaw_agent` | `"main"` | OC agent ID used for the openclaw runner. |
+| `notifications.enabled` | `false` | Notifications are off by default. Review files are still written locally. |
+| `notifications.channel` | `null` | Channel for optional notifications. `null` keeps skillminer quiet. |
+| `notifications.threadId` | `null` | Optional thread/topic ID. |
+| `runner.default` | `"openclaw"` | `"openclaw"` or `"claude"`. |
+| `runner.openclaw_agent` | `"main"` | OpenClaw agent ID used for the local runner. |
 | `scan.windowDays` | `10` | Days of memory to scan each night. |
-| `scan.minOccurrences` | `3` | Minimum occurrences to become a candidate. |
+| `scan.minOccurrences` | `3` | Minimum occurrences before a pattern can become a candidate. |
 | `scan.minDistinctDays` | `2` | Pattern must span at least this many distinct days. |
-| `scan.cooldownDays` | `30` | Days before rejected/deferred patterns resurface. |
-| `thresholds.low` | `2` | Occurrences to reach low confidence. |
-| `thresholds.medium` | `4` | Occurrences to reach medium confidence. |
-| `thresholds.high` | `6` | Occurrences to reach high confidence. |
+| `scan.cooldownDays` | `30` | Days before rejected or deferred patterns may resurface. |
+| `thresholds.low` | `3` | Minimum count for a low-confidence candidate band. |
+| `thresholds.medium` | `4` | Minimum count for a medium-confidence band. |
+| `thresholds.high` | `6` | Minimum count for a high-confidence band. |
+
+Confidence labels now use the configured `thresholds.*` values instead of hardcoded prompt bands.
 
 ---
 
-## → Full usage guide
+## Notification behavior
 
-Commands, fuzzy matching, natural language interface, runner modes, manual dry-runs, state files, schema — it's all in **[USER_GUIDE.md](USER_GUIDE.md)**.
+By default, skillminer does **not** notify you. It still writes review output locally:
+
+- scan review: `state/review/YYYY-MM-DD.md`
+- scan logs: `state/logs/scan-*.log`
+- write logs: `state/write-log/YYYY-MM-DD.md`
+
+Enable notifications only if you want chat delivery.
 
 ---
 
 ## Troubleshooting
 
-**Scan didn't run / no notification:**
+**Scan ran but I got no message:**
+- This is expected unless `notifications.enabled=true` and a channel is configured.
+- Check the local outputs first:
 ```bash
-cat "${CLAWD_DIR:-$HOME/clawd}/skills/skillminer/state/logs/scan-YYYY-MM-DD.log"
-cat "${CLAWD_DIR:-$HOME/clawd}/skills/skillminer/state/review/YYYY-MM-DD.md"
+ls state/review/
+cat state/logs/scan-*.log | tail -n 60
 ```
 
 **Nothing drafted at 10:00:**
 Make sure you accepted at least one candidate before 10:00, then check:
 ```bash
-cat "${CLAWD_DIR:-$HOME/clawd}/skills/skillminer/state/state.json" | jq '.candidates'
+cat state/state.json | jq '.candidates'
 ```
 
 **State file corrupted:**
@@ -145,6 +171,12 @@ cp state-template.json state/state.json
 ```bash
 FORGE_RUNNER=claude CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash scripts/run-nightly-scan.sh
 ```
+
+---
+
+## Full guide
+
+See [USER_GUIDE.md](USER_GUIDE.md) for the full walkthrough.
 
 ---
 

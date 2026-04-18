@@ -26,6 +26,10 @@ SCAN_WINDOW_DAYS="$(jq -r '.scan.windowDays // 10' "$CONFIG_FILE" 2>/dev/null ||
 SCAN_MIN_OCCURRENCES="$(jq -r '.scan.minOccurrences // 3' "$CONFIG_FILE" 2>/dev/null || echo '3')"
 SCAN_MIN_DISTINCT_DAYS="$(jq -r '.scan.minDistinctDays // 2' "$CONFIG_FILE" 2>/dev/null || echo '2')"
 SCAN_COOLDOWN_DAYS="$(jq -r '.scan.cooldownDays // 30' "$CONFIG_FILE" 2>/dev/null || echo '30')"
+THRESHOLD_LOW="$(jq -r '.thresholds.low // .scan.minOccurrences // 3' "$CONFIG_FILE" 2>/dev/null || echo '3')"
+THRESHOLD_MEDIUM="$(jq -r '.thresholds.medium // 4' "$CONFIG_FILE" 2>/dev/null || echo '4')"
+THRESHOLD_HIGH="$(jq -r '.thresholds.high // 6' "$CONFIG_FILE" 2>/dev/null || echo '6')"
+MAX_BUDGET_USD="$(jq -r '.scan.maxBudgetUsd // 3' "$CONFIG_FILE" 2>/dev/null || echo '3')"
 
 # Write temp prompt file — inject runtime values (OC agent doesn't inherit env vars)
 PROMPT_FILE="$(mktemp /tmp/forge-scan-prompt.XXXXXX.md)"
@@ -33,8 +37,11 @@ PROMPT_FILE="$(mktemp /tmp/forge-scan-prompt.XXXXXX.md)"
   printf '> **Runtime preamble (injected by run-nightly-scan.sh):**\n'
   printf '> `CLAWD_DIR=%s` — use this as the authoritative CLAWD_DIR value throughout; skip Step 0 MISSING check (env var is not available in the agent session, but this path is confirmed valid).\n' "$CLAWD_DIR"
   printf '> `FORGE_DIR=%s` — use this as the authoritative installed skill path throughout; do not derive it from `CLAWD_DIR`.\n' "$FORGE_DIR"
-  printf '> `scan.windowDays=%s`, `scan.minOccurrences=%s`, `scan.minDistinctDays=%s`, `scan.cooldownDays=%s` — these are the active scan settings from `%s`; use them instead of prompt defaults wherever referenced below.\n\n' \
+  printf '> `scan.windowDays=%s`, `scan.minOccurrences=%s`, `scan.minDistinctDays=%s`, `scan.cooldownDays=%s` — these are the active scan settings from `%s`; use them instead of prompt defaults wherever referenced below.\n' \
     "$SCAN_WINDOW_DAYS" "$SCAN_MIN_OCCURRENCES" "$SCAN_MIN_DISTINCT_DAYS" "$SCAN_COOLDOWN_DAYS" "$CONFIG_FILE"
+  printf '> `thresholds.low=%s`, `thresholds.medium=%s`, `thresholds.high=%s` — use these configured confidence bands instead of hardcoded occurrence bands.\n' \
+    "$THRESHOLD_LOW" "$THRESHOLD_MEDIUM" "$THRESHOLD_HIGH"
+  printf '> `scan.maxBudgetUsd=%s` — use this for any Claude fallback budget reference.\n\n' "$MAX_BUDGET_USD"
   cat "$FORGE_DIR/prompts/nightly-scan.md"
 } > "$PROMPT_FILE"
 
@@ -63,7 +70,7 @@ elif [ "$FORGE_RUNNER" = "claude" ]; then
     --model sonnet \
     --effort high \
     --permission-mode auto \
-    --max-budget-usd 3 \
+    --max-budget-usd "$MAX_BUDGET_USD" \
     < "$PROMPT_FILE" >> "$LOG" 2>&1
 else
   echo "ERROR: unknown FORGE_RUNNER=$FORGE_RUNNER (expected: openclaw | claude)" >> "$LOG"

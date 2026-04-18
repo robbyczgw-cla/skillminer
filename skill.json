@@ -2,6 +2,6 @@
   "slug": "skillminer",
   "name": "Skill Miner",
   "version": "0.1.7",
-  "description": "Autonomous skill proposal system (OpenClaw runner edition). Scans memory for recurring patterns and drafts skills for human review.",
+  "description": "Optional local memory scan that suggests reusable skills and drafts accepted ones for human review.",
   "tags": ["productivity", "meta", "skills", "automation"]
 }
