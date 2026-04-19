@@ -10,6 +10,10 @@ A wrapper may inject a preamble above this prompt with authoritative values for:
 
 Use injected values when present.
 
+## Slug contract
+
+Slugs must match regex `^[a-z0-9]+(-[a-z0-9]+){1,3}$`. The wrapper validates every accepted slug before invoking this prompt and aborts the run on any mismatch. Treat any slug you read from `state/state.json` as already validated, do not re-validate or modify it. If you would generate a new slug in `nightly-scan.md`, only produce slugs that match this regex.
+
 ## Hard rules
 
 - Never write to live `skills/<slug>/`.

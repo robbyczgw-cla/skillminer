@@ -125,6 +125,7 @@ If thresholds overlap oddly, still respect numeric order by meaning: highest qua
 
 ### 8) Slugs and resurfacing
 Create English kebab-case slugs, 2 to 4 words, intent-based.
+- Slugs MUST match `^[a-z0-9]+(-[a-z0-9]+){1,3}$`. Reject any candidate whose natural name cannot be expressed as a valid kebab-case slug of 2-4 lowercase alphanumeric words. Do not emit slugs with underscores, uppercase letters, path separators, dots, or any other punctuation.
 If a pattern semantically matches a rejected or deferred entry:
 - reuse the historical id
 - if cooldown active, skip proposal and list it in cooldown reporting

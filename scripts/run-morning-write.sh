@@ -16,6 +16,8 @@ mkdir -p "$LOG_DIR" "$WRITE_LOG_DIR"
 
 # shellcheck source=/dev/null
 source "$FORGE_DIR/scripts/lib/atomic-write.sh"
+# shellcheck source=/dev/null
+source "$FORGE_DIR/scripts/lib/slug-validate.sh"
 if ! acquire_skillminer_lock; then
   exit 3
 fi
@@ -35,6 +37,14 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 OC_AGENT="$(jq -r '.runner.openclaw_agent // "main"' "$CONFIG_FILE" 2>/dev/null || echo 'main')"
 MAX_BUDGET_USD="$(jq -r '.scan.maxBudgetUsd // 3' "$CONFIG_FILE" 2>/dev/null || echo '3')"
+
+while IFS= read -r candidate_slug; do
+  if ! validate_slug "$candidate_slug" "accepted candidate id"; then
+    echo "[skillminer] FATAL: state.json contains invalid accepted slug, aborting write" >&2
+    release_skillminer_lock
+    exit 4
+  fi
+done < <(jq -r '.candidates[] | select(.status == "accepted") | .id' "$STATE_FILE")
 
 # Write temp prompt file — inject CLAWD_DIR preamble (OC agent doesn't inherit env vars)
 PROMPT_FILE="$(mktemp /tmp/forge-write-prompt.XXXXXX.md)"

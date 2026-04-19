@@ -31,6 +31,8 @@
 
 set -euo pipefail
 
+source "$(dirname "${BASH_SOURCE[0]}")/lib/slug-validate.sh"
+
 die()   { printf 'error: %s\n' "$*" >&2; exit 1; }
 usage() {
   cat >&2 <<'USAGE'
@@ -95,6 +97,7 @@ case "$cmd" in
 
   accept)
     id="${1:-}"; [[ -n "$id" ]] || usage
+    validate_slug "$id" "candidate id" || exit 4
     NOW=$(iso_now)
 
     if ! jq -e --arg id "$id" '
@@ -119,6 +122,7 @@ case "$cmd" in
   reject)
     id="${1:-}"; reason="${2:-}"
     [[ -n "$id" && -n "$reason" ]] || usage
+    validate_slug "$id" "candidate id" || exit 4
     NOW=$(iso_now); TODAY=$(today_utc)
 
     jq -e --arg id "$id" '.candidates[] | select(.id == $id)' "$STATE" >/dev/null \
@@ -147,6 +151,7 @@ case "$cmd" in
   defer)
     id="${1:-}"; reason="${2:-}"
     [[ -n "$id" && -n "$reason" ]] || usage
+    validate_slug "$id" "candidate id" || exit 4
     NOW=$(iso_now); TODAY=$(today_utc)
 
     jq -e --arg id "$id" '.candidates[] | select(.id == $id)' "$STATE" >/dev/null \
@@ -174,6 +179,7 @@ case "$cmd" in
 
   promote)
     id="${1:-}"; [[ -n "$id" ]] || usage
+    validate_slug "$id" "candidate id" || exit 4
     NOW=$(iso_now); TODAY=$(today_utc)
 
     # Require observations-capable schema for promote.
@@ -237,6 +243,7 @@ case "$cmd" in
   silence)
     id="${1:-}"; reason="${2:-}"
     [[ -n "$id" && -n "$reason" ]] || usage
+    validate_slug "$id" "candidate id" || exit 4
     NOW=$(iso_now); TODAY=$(today_utc)
 
     [[ "$SCHEMA_VERSION" == "0.3" || "$SCHEMA_VERSION" == "0.4" ]] || die "silence requires schema 0.3 or 0.4 (found $SCHEMA_VERSION)"
@@ -273,6 +280,7 @@ case "$cmd" in
 
   unsilence)
     id="${1:-}"; [[ -n "$id" ]] || usage
+    validate_slug "$id" "candidate id" || exit 4
     NOW=$(iso_now)
 
     [[ "$SCHEMA_VERSION" == "0.3" || "$SCHEMA_VERSION" == "0.4" ]] || die "unsilence requires schema 0.3 or 0.4 (found $SCHEMA_VERSION)"
@@ -308,6 +316,7 @@ case "$cmd" in
         silenced:     [(.silenced // [])[]     | {id, silencedAt, reason}]
       }' "$STATE"
     else
+      validate_slug "$id" "candidate id" || exit 4
       jq --arg id "$id" '{
         candidate:   ([.candidates[]?           | select(.id == $id)] | first),
         observation: ([(.observations // [])[]? | select(.id == $id)] | first),

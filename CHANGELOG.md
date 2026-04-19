@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.2 - 2026-04-19
+- Add hard regex-based slug validation at every slug to filesystem path boundary
+- New: `scripts/lib/slug-validate.sh` with canonical `validate_slug()` function
+- `manage-ledger.sh` now rejects malformed slugs with exit code 4 on every subcommand
+- `run-morning-write.sh` does a pre-flight scan of all accepted candidate slugs and aborts before writes if any fails validation
+- Prompts `skill-writer.md` and `nightly-scan.md` document the slug contract
+- Defense-in-depth against prompt-injection-induced path traversal: LLM-generated slugs are now technically gated, not just convention-guided
+- Reserve exit code `4` for slug/path-validation failures
+
 ## 0.4.0 - 2026-04-19
 - BREAKING: cron scheduling pattern changed to wrapper-dispatch
 - Reason: the 0.3.2 `.tmp`-writing prompts were incompatible with inline `agentTurn` scheduling, so wrapper-backed atomic promotion never ran and scheduled state writes could be lost silently
