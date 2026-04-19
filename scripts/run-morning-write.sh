@@ -41,7 +41,6 @@ MAX_BUDGET_USD="$(jq -r '.scan.maxBudgetUsd // 3' "$CONFIG_FILE" 2>/dev/null || 
 while IFS= read -r candidate_slug; do
   if ! validate_slug "$candidate_slug" "accepted candidate id"; then
     echo "[skillminer] FATAL: state.json contains invalid accepted slug, aborting write" >&2
-    release_skillminer_lock
     exit 4
   fi
 done < <(jq -r '.candidates[] | select(.status == "accepted") | .id' "$STATE_FILE")

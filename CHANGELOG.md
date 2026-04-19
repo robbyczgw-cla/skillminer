@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.3 - 2026-04-19
+- Fix: remove undefined `release_skillminer_lock` call in `run-morning-write.sh` slug pre-flight; the `flock -n` on FD 9 is released automatically on shell exit, no explicit release needed. Previously this produced exit 127 with set -e instead of the intended exit 4.
+- Fix: README version banner updated from 0.4.0 to 0.4.3
+- Doc: README polish pass adds explicit wrapper exit codes and a short security section covering slug validation, locking, atomic writes, and memory-as-data handling
+
 ## 0.4.2 - 2026-04-19
 - Add hard regex-based slug validation at every slug to filesystem path boundary
 - New: `scripts/lib/slug-validate.sh` with canonical `validate_slug()` function

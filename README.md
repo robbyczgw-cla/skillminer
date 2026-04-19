@@ -2,7 +2,7 @@
 
 > Your AI assistant keeps solving the same problems. skillminer notices — and suggests turning them into reusable skills.
 
-**Version:** 0.4.0 | **Runner:** OpenClaw-native | **Schema:** 0.4
+**Version:** 0.4.3 | **Runner:** OpenClaw-native | **Schema:** 0.4
 
 You build patterns. Every day, in every conversation. skillminer watches your local memory files, spots recurring work, and surfaces the ones worth keeping. No auto-activation, no cloud sync, no noise by default. Just a morning suggestion waiting in your inbox when something actually deserves to become a skill.
 
@@ -149,6 +149,11 @@ cat state/state.json | jq '.candidates'
 cp state-template.json state/state.json
 ```
 
+**Wrapper exits non-zero?**
+- Exit `2`: atomic validation or tmp-write promotion failed
+- Exit `3`: another skillminer run already holds the lock
+- Exit `4`: slug validation failed before filesystem writes
+
 **Want to try the Claude runner?**
 
 Default runner: `openclaw` (local only, no data leaves the host).
@@ -158,6 +163,15 @@ Optional fallback: `FORGE_RUNNER=claude`, which uses Claude CLI and sends prompt
 ```bash
 FORGE_RUNNER=claude CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash scripts/run-nightly-scan.sh
 ```
+
+---
+
+## Security
+
+- Slugs are regex-validated before any filesystem path is derived from them (0.4.2)
+- `flock` prevents overlapping scan and write runs from mutating shared state at the same time (0.3.2)
+- State updates use atomic tmp-write promotion with backup rotation and rollback validation (0.3.2)
+- Nightly scan treats memory files as untrusted data, not instructions to execute (0.3.2)
 
 ---
 
