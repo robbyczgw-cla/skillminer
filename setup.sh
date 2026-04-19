@@ -55,13 +55,18 @@ Manual wrappers:
 Symlink setup:
   $SYMLINK_NOTE
 
-Recommended scheduler pattern with your local timezone:
+Recommended scheduler pattern (OpenClaw cron):
   - payload.kind: agentTurn
-  - payload.message: inline contents of prompts/nightly-scan.md or prompts/skill-writer.md
+  - payload.message: inline contents of prompts/cron-dispatch-nightly.md
+    (or prompts/cron-dispatch-morning.md for the morning-write job)
   - delivery.mode: announce
   - delivery target: your channel/topic
 
-Do not schedule the bash wrappers for routine cron runs.
+The dispatch prompt executes $SKILL_DIR/scripts/run-nightly-scan.sh (or run-morning-write.sh)
+via the bash tool. The wrapper owns flock, state backup, atomic .tmp promotion, and
+JSON validation. Do NOT inline nightly-scan.md or skill-writer.md directly, those prompts
+write to .tmp files and require the wrapper for atomic promotion.
+
 Notifications are handled by cron announce delivery.
 Review output is always written locally under:
   $SKILL_DIR/state/review/

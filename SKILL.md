@@ -1,7 +1,7 @@
 ---
 name: skillminer
-version: 0.3.3
-description: "Suggest reusable skills from recurring local memory patterns. Keeps a human review gate, drafts only to skills/_pending/, defaults to the local OpenClaw runner, supports an optional external Claude fallback, and now adds richer scan summaries, manual trigger commands, atomic state writes, flock locking, and memory-as-data framing. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
+version: 0.4.0
+description: "Suggest reusable skills from recurring local memory patterns. Keeps a human review gate, drafts only to skills/_pending/, defaults to the local OpenClaw runner, supports an optional external Claude fallback, and now adds richer scan summaries, manual trigger commands, atomic state writes, flock locking, memory-as-data framing, and wrapper-dispatch cron scheduling. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
 metadata:
   openclaw:
     requires:
@@ -44,8 +44,9 @@ skillminer suggests reusable skills from recurring work in your local memory fil
 - Review files are written locally even when notifications stay off
 - Nightly scan summaries now include trend arrows, pending-age hints, and a live portfolio snapshot
 
-## Production hardening (0.3.2)
+## Production hardening (0.4.0)
 
+- Wrapper-dispatch cron prompts now execute the hardened bash wrappers on every scheduled run
 - Atomic tmp-write plus wrapper validation for `state.json`
 - Atomic promotion for review and write-log files
 - Parent/child `flock` locking to prevent overlapping runs
@@ -61,7 +62,7 @@ bash setup.sh
 CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash scripts/run-nightly-scan.sh
 ```
 
-If the manual scan looks good, add the printed scheduler jobs.
+If the manual scan looks good, add the printed scheduler jobs using the new dispatcher prompts.
 
 ## Environment
 

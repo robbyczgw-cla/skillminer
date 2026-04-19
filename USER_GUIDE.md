@@ -125,8 +125,9 @@ cat state/logs/scan-*.log | tail -n 40
 **4. Only then add the two scheduler jobs**
 
 Use your local timezone in the scheduler configuration, for example `<Your/Timezone>`.
-Use `payload.kind: "agentTurn"` with the full prompt inline, and let cron handle delivery via `delivery.mode: "announce"`.
-Do not wrap scheduled runs in `bash ...run-*.sh`.
+Use `payload.kind: "agentTurn"` with the full dispatcher prompt inline, and let cron handle delivery via `delivery.mode: "announce"`.
+The dispatcher uses the bash tool to execute the wrapper, which handles flock, backup, and atomic `.tmp` promotion.
+Do not inline `prompts/nightly-scan.md` or `prompts/skill-writer.md` directly in cron.
 
 Nightly scan example:
 ```json
@@ -135,7 +136,7 @@ Nightly scan example:
   "schedule": { "cron": "0 4 * * *", "timezone": "<Your/Timezone>" },
   "payload": {
     "kind": "agentTurn",
-    "message": "<contents of prompts/nightly-scan.md, optionally with a runtime preamble>",
+    "message": "<contents of prompts/cron-dispatch-nightly.md>",
     "model": "github-copilot/claude-sonnet-4.6",
     "timeoutSeconds": 900
   },
@@ -147,7 +148,8 @@ Nightly scan example:
 }
 ```
 
-Morning write uses the same pattern with `prompts/skill-writer.md` as the inline `message`.
+Morning write uses the same pattern with `prompts/cron-dispatch-morning.md` as the inline `message`.
+The wrapper still reads `prompts/nightly-scan.md` and `prompts/skill-writer.md` internally for the actual analysis and drafting work.
 
 ## Configuration
 

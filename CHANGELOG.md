@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 - 2026-04-19
+- BREAKING: cron scheduling pattern changed to wrapper-dispatch
+- Reason: the 0.3.2 `.tmp`-writing prompts were incompatible with inline `agentTurn` scheduling, so wrapper-backed atomic promotion never ran and scheduled state writes could be lost silently
+- Migration: reschedule existing cron jobs to inline `prompts/cron-dispatch-nightly.md` and `prompts/cron-dispatch-morning.md` instead of the raw analysis prompts
+- Kept: all 0.3.2 hardening stays in place, and now actually runs on every scheduled tick via the wrapper path
+
 ## 0.3.3 - 2026-04-19
 - Fixed: removed literal injection-example phrase from nightly-scan.md prompt that triggered ClawHub static scanner false positive. Framing preserved, wording neutralized.
 

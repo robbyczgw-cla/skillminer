@@ -2,7 +2,7 @@
 
 > Your AI assistant keeps solving the same problems. skillminer notices — and suggests turning them into reusable skills.
 
-**Version:** 0.3.1 | **Runner:** OpenClaw-native | **Schema:** 0.4
+**Version:** 0.4.0 | **Runner:** OpenClaw-native | **Schema:** 0.4
 
 You build patterns. Every day, in every conversation. skillminer watches your local memory files, spots recurring work, and surfaces the ones worth keeping. No auto-activation, no cloud sync, no noise by default. Just a morning suggestion waiting in your inbox when something actually deserves to become a skill.
 
@@ -63,7 +63,7 @@ cd "${CLAWD_DIR:-$HOME/clawd}/skills/skillminer"
 bash setup.sh
 ```
 
-This creates your state file, copies the default config, and prints the exact scheduler commands for your install path.
+This creates your state file, copies the default config, and prints the exact scheduler commands for your install path, including the wrapper-dispatch cron prompts.
 
 **3. Test it first**
 
@@ -129,14 +129,14 @@ By default, skillminer is silent. It still writes everything locally:
 - Scan logs: `state/logs/scan-*.log`
 - Write logs: `state/write-log/YYYY-MM-DD.md`
 
-For scheduled runs, use cron `delivery.mode: "announce"` for chat delivery. Do not send notifications from inside the prompts.
+For scheduled runs, use cron `delivery.mode: "announce"` for chat delivery and inline `prompts/cron-dispatch-nightly.md` or `prompts/cron-dispatch-morning.md` as the payload message. The dispatcher invokes the hardened wrapper via the bash tool, then returns a human summary. Do not send notifications from inside the analysis prompts.
 
 ---
 
 ## Troubleshooting
 
 **No notification after the scan?**
-Check the cron job delivery config first. The supported scheduled pattern is cron `delivery.mode: "announce"` pointing at your channel/topic.
+Check the cron job delivery config first. The supported scheduled pattern is cron `delivery.mode: "announce"` pointing at your channel/topic, with the dispatcher prompt inlined as the payload message.
 
 **Nothing drafted at 10:00?**
 You need to accept at least one candidate before the morning write runs:
