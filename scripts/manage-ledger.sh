@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # manage-ledger.sh — deterministic ledger transitions for skillminer
 #
-# v0.1.0 — schema 0.3
+# v0.1.0 — schema 0.4
 #
 # Usage:
 #   manage-ledger.sh accept    <id>
@@ -13,9 +13,9 @@
 #   manage-ledger.sh show      [<id>]               # dump ledger summary or one entry
 #
 # Env:
-#   CLAWD_DIR     (required) — base workspace (memory + drafted skills output)
+#   CLAWD_DIR     (optional, defaults to ~/clawd in wrapper scripts) — base workspace (memory + drafted skills output)
 #
-# Deps: bash, jq. Deterministic, no LLM, no network.
+# Deps: bash, jq, git. Deterministic, no LLM, no network.
 # Atomic via tmpfile + rename. Safe for single-human use (no locking for
 # concurrent writers — skillminer does not have concurrent writers).
 #
@@ -55,21 +55,17 @@ today_utc() { date -u +"%Y-%m-%d"; }
 
 SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FORGE_DIR="$SKILL_DIR"
-
-if [[ -n "${CLAWD_DIR:-}" ]]; then
-  STATE="$FORGE_DIR/state/state.json"
-else
-  die "CLAWD_DIR not set"
-fi
+CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}"
+STATE="$FORGE_DIR/state/state.json"
 
 [[ -f "$STATE" ]] || die "state.json not found at $STATE"
 jq -e . "$STATE" >/dev/null 2>&1 || die "state.json is not valid JSON: $STATE"
 
-# schema guard — accept 0.2 (legacy) and 0.3 only
+# schema guard — accept 0.2 (legacy), 0.3, and 0.4
 SCHEMA_VERSION=$(jq -r '.schema_version // ""' "$STATE")
 case "$SCHEMA_VERSION" in
-  0.2|0.3) ;;
-  *) die "unsupported schema_version '$SCHEMA_VERSION' — expected 0.2 or 0.3" ;;
+  0.2|0.3|0.4) ;;
+  *) die "unsupported schema_version '$SCHEMA_VERSION' — expected 0.2, 0.3, or 0.4" ;;
 esac
 
 # atomic-write helper ------------------------------------------------------
@@ -180,8 +176,8 @@ case "$cmd" in
     id="${1:-}"; [[ -n "$id" ]] || usage
     NOW=$(iso_now); TODAY=$(today_utc)
 
-    # Require schema 0.3 for promote (observations[] only exists in 0.3).
-    [[ "$SCHEMA_VERSION" == "0.3" ]] || die "promote requires schema 0.3 (found $SCHEMA_VERSION)"
+    # Require observations-capable schema for promote.
+    [[ "$SCHEMA_VERSION" == "0.3" || "$SCHEMA_VERSION" == "0.4" ]] || die "promote requires schema 0.3 or 0.4 (found $SCHEMA_VERSION)"
 
     jq -e --arg id "$id" '(.observations // [])[] | select(.id == $id)' "$STATE" >/dev/null \
       || die "no observation with id '$id' in observations[]"
@@ -243,7 +239,7 @@ case "$cmd" in
     [[ -n "$id" && -n "$reason" ]] || usage
     NOW=$(iso_now); TODAY=$(today_utc)
 
-    [[ "$SCHEMA_VERSION" == "0.3" ]] || die "silence requires schema 0.3 (found $SCHEMA_VERSION)"
+    [[ "$SCHEMA_VERSION" == "0.3" || "$SCHEMA_VERSION" == "0.4" ]] || die "silence requires schema 0.3 or 0.4 (found $SCHEMA_VERSION)"
 
     if jq -e --arg id "$id" '(.silenced // [])[] | select(.id == $id)' "$STATE" >/dev/null; then
       die "id '$id' already silenced — use unsilence first if you want to change reason"
@@ -279,7 +275,7 @@ case "$cmd" in
     id="${1:-}"; [[ -n "$id" ]] || usage
     NOW=$(iso_now)
 
-    [[ "$SCHEMA_VERSION" == "0.3" ]] || die "unsilence requires schema 0.3 (found $SCHEMA_VERSION)"
+    [[ "$SCHEMA_VERSION" == "0.3" || "$SCHEMA_VERSION" == "0.4" ]] || die "unsilence requires schema 0.3 or 0.4 (found $SCHEMA_VERSION)"
 
     jq -e --arg id "$id" '(.silenced // [])[] | select(.id == $id)' "$STATE" >/dev/null \
       || die "id '$id' not in silenced[]"

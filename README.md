@@ -2,7 +2,7 @@
 
 > Your AI assistant keeps solving the same problems. skillminer notices — and suggests turning them into reusable skills.
 
-**Version:** 0.2.1 | **Runner:** OpenClaw-native | **Schema:** 0.3
+**Version:** 0.3.1 | **Runner:** OpenClaw-native | **Schema:** 0.4
 
 You build patterns. Every day, in every conversation. skillminer watches your local memory files, spots recurring work, and surfaces the ones worth keeping. No auto-activation, no cloud sync, no noise by default. Just a morning suggestion waiting in your inbox when something actually deserves to become a skill.
 
@@ -25,19 +25,23 @@ You build patterns. Every day, in every conversation. skillminer watches your lo
 
 Nothing goes live automatically. You stay in control at every step.
 
+By default, skillminer runs with `FORGE_RUNNER=openclaw`, which stays local to the host and does not send your data off-host.
+
+If you explicitly set `FORGE_RUNNER=claude`, skillminer uses Claude CLI as a fallback runner. That sends prompt data to Anthropic's API. Only enable it if you understand and accept that data leaves the host.
+
 ---
 
 ## Requirements
 
 - OpenClaw (recent version)
-- `bash`, `jq` on PATH
+- `bash`, `jq`, `git` on PATH
 - Claude CLI (`claude`) — only if you explicitly switch to `FORGE_RUNNER=claude`
 
 ---
 
 ## Quickstart
 
-> `CLAWD_DIR` is your OpenClaw workspace — default `~/clawd`.
+> `CLAWD_DIR` is optional. If unset, skillminer uses your OpenClaw workspace default at `~/clawd`.
 
 **1. Install**
 
@@ -146,6 +150,11 @@ cp state-template.json state/state.json
 ```
 
 **Want to try the Claude runner?**
+
+Default runner: `openclaw` (local only, no data leaves the host).
+
+Optional fallback: `FORGE_RUNNER=claude`, which uses Claude CLI and sends prompt data to Anthropic's API. Only enable it if you understand that data leaves the host.
+
 ```bash
 FORGE_RUNNER=claude CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash scripts/run-nightly-scan.sh
 ```

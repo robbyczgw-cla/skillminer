@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1 - 2026-04-19
+- Fix ClawHub scanner issues by adding `git` to required binaries
+- Mark `CLAWD_DIR` as optional in skill metadata and align docs around the `~/clawd` default
+- Add explicit local-vs-external runner disclosure for the default `openclaw` runner and optional `FORGE_RUNNER=claude` fallback
+- Align the ledger and prompts on schema `0.4`, including `manage-ledger.sh` acceptance
+
 ## 0.3.0 - 2026-04-19
 - Add observation trend fields to the 0.4 ledger schema: `previousOccurrences` and `previousDays`, with prompt guidance to treat legacy missing values as `null`
 - Expand nightly scan reporting with observation trend arrows, pending-candidate ledger aging, and a live portfolio snapshot section

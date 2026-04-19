@@ -24,7 +24,7 @@ Use injected values when present.
 ## Workflow
 
 ### 1) Validate workspace and freshness
-- Use injected `CLAWD_DIR` and `FORGE_DIR` if present.
+- Use injected `CLAWD_DIR` and `FORGE_DIR` if present. Otherwise default `CLAWD_DIR` to `~/clawd`.
 - Set `PENDING_DIR="$CLAWD_DIR/skills/_pending"`.
 - Compute `TODAY` and `NOW` in UTC.
 - Read `$FORGE_DIR/state/.last-success`.
@@ -34,7 +34,7 @@ Use injected values when present.
 Read `$FORGE_DIR/state/state.json`.
 Expected:
 - valid JSON
-- `schema_version == "0.3"`
+- `schema_version == "0.4"`
 - arrays present: `candidates`, `observations`, `rejected`, `deferred`, `silenced`
 
 If validation fails:

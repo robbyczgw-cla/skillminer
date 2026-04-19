@@ -38,7 +38,7 @@ Use injected values when present. Defaults if missing:
 ## Workflow
 
 ### 1) Validate workspace and dates
-- Use injected `CLAWD_DIR` and `FORGE_DIR` if present. Otherwise require `CLAWD_DIR` env.
+- Use injected `CLAWD_DIR` and `FORGE_DIR` if present. Otherwise default `CLAWD_DIR` to `~/clawd`.
 - Compute `TODAY` in UTC as `YYYY-MM-DD`.
 - Build the inclusive scan window of the last `windowDays` days ending on `TODAY`.
 

@@ -1,13 +1,14 @@
 ---
 name: skillminer
-version: 0.3.0
-description: "Suggest reusable skills from recurring local memory patterns. Keeps a human review gate, drafts only to skills/_pending/, defaults to the local OpenClaw runner, supports an optional Claude fallback, and now adds richer scan summaries plus manual trigger commands. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
+version: 0.3.1
+description: "Suggest reusable skills from recurring local memory patterns. Keeps a human review gate, drafts only to skills/_pending/, defaults to the local OpenClaw runner, supports an optional external Claude fallback, and now adds richer scan summaries plus manual trigger commands. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
 metadata:
   openclaw:
     requires:
-      bins: ["jq", "bash", "date", "openclaw"]
-      env: ["CLAWD_DIR"]
-    note: "The skill auto-detects its install location. CLAWD_DIR defaults to ~/clawd if unset and is used only for workspace memory files plus skills/_pending/ output. Set FORGE_RUNNER=claude to use Claude Code CLI with external execution. Never activates skills automatically."
+      bins: ["jq", "bash", "date", "git", "openclaw"]
+      env:
+        CLAWD_DIR: optional
+    note: "The skill auto-detects its install location. CLAWD_DIR defaults to ~/clawd if unset and is used only for workspace memory files plus skills/_pending/ output. The default runner is openclaw (local only, no data leaves the host). FORGE_RUNNER=claude is an optional external fallback that uses Claude CLI and sends data to Anthropic's API. Only enable it if you understand that data leaves the host. Never activates skills automatically."
 triggers:
   - "skill forge"
   - "skill candidates"
@@ -37,8 +38,8 @@ skillminer suggests reusable skills from recurring work in your local memory fil
 
 - Human gate first, always
 - Drafts go to `skills/_pending/`, never live skills
-- Local OpenClaw runner by default
-- Claude fallback is optional and external
+- Local OpenClaw runner by default, local only, no data leaves the host
+- Claude fallback is optional, external, and sends data to Anthropic's API
 - Notifications are off by default
 - Review files are written locally even when notifications stay off
 - Nightly scan summaries now include trend arrows, pending-age hints, and a live portfolio snapshot
@@ -53,6 +54,12 @@ CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash scripts/run-nightly-scan.sh
 ```
 
 If the manual scan looks good, add the printed scheduler jobs.
+
+## Environment
+
+- `CLAWD_DIR` is optional. If unset, skillminer defaults to `~/clawd`.
+- `FORGE_RUNNER` defaults to `openclaw`, which stays local to the host.
+- `FORGE_RUNNER=claude` is an optional fallback that uses Claude CLI and sends prompt data to Anthropic's API. Only enable it if you understand that data leaves the host.
 
 ## Commands
 
