@@ -1,7 +1,12 @@
 {
   "slug": "skillminer",
   "name": "Skill Miner",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Production-hardened local memory scan that suggests reusable skills, adds richer reporting, manual trigger commands, atomic state writes, flock locking, memory-as-data framing, and wrapper-dispatch cron scheduling.",
-  "tags": ["productivity", "meta", "skills", "automation"]
+  "tags": [
+    "productivity",
+    "meta",
+    "skills",
+    "automation"
+  ]
 }

@@ -206,8 +206,8 @@ skillminer help
 When to use manual triggers:
 - A new important memory file just landed and you do not want to wait until 02:00 UTC
 - You want to test the richer scan output today
-- Cami wants to trigger scan or write through delegated exec
-- Andy is on SSH and wants a short path-style command
+- Another agent or session wants to trigger scan or write
+- You are on SSH and want a short path-style command
 
 ## Notifications
 

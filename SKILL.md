@@ -1,7 +1,7 @@
 ---
 name: skillminer
-version: 0.4.3
-description: "Suggest reusable skills from recurring local memory patterns. Keeps a human review gate, drafts only to skills/_pending/, defaults to the local OpenClaw runner, supports an optional external Claude fallback, and now adds richer scan summaries, manual trigger commands, atomic state writes, flock locking, memory-as-data framing, and wrapper-dispatch cron scheduling. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
+version: 0.4.4
+description: "Suggest reusable skills from recurring patterns in local memory files. Human review gate, drafts only to skills/_pending/, local-first runner with optional external fallback. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
 metadata:
   openclaw:
     requires:
@@ -32,26 +32,32 @@ triggers:
 
 # skillminer ⚒️
 
-skillminer suggests reusable skills from recurring work in your local memory files.
+> Your AI assistant keeps solving the same problems. skillminer notices and suggests turning them into reusable skills.
 
-## What makes it trustworthy
+skillminer watches your local memory files, spots recurring work, and surfaces the patterns worth keeping. No auto-activation, no cloud sync, no noise by default. A morning suggestion in your inbox when something actually deserves to become a skill.
 
-- Human gate first, always
-- Drafts go to `skills/_pending/`, never live skills
-- Local OpenClaw runner by default, local only, no data leaves the host
-- Claude fallback is optional, external, and sends data to Anthropic's API
-- Notifications are off by default
-- Review files are written locally even when notifications stay off
-- Nightly scan summaries now include trend arrows, pending-age hints, and a live portfolio snapshot
+## Trust model
 
-## Production hardening (0.4.0)
+- Human gate first, always. Nothing ships without your explicit accept.
+- Drafts go to `skills/_pending/<slug>/`, never to live skills.
+- Default runner is local OpenClaw. No data leaves the host.
+- `FORGE_RUNNER=claude` is an opt-in external fallback that sends prompt data to Anthropic's API.
+- Notifications are off by default; review files are written locally regardless.
 
-- Wrapper-dispatch cron prompts now execute the hardened bash wrappers on every scheduled run
-- Atomic tmp-write plus wrapper validation for `state.json`
-- Atomic promotion for review and write-log files
-- Parent/child `flock` locking to prevent overlapping runs
-- Conservative memory-as-data framing against prompt injection attempts
-- Exit code `2` for validation or atomic-write failures, `3` for lock contention
+## Flow
+
+```
+nightly scan   reads recent memory/YYYY-MM-DD.md files
+               detects recurring task patterns
+               writes a review file to state/review/
+               ↓
+YOU DECIDE     forge accept / reject / defer / silence
+               ↓
+morning write  drafts a SKILL.md into skills/_pending/<slug>/
+               you review it, promote it, ship it
+```
+
+Nothing goes live automatically. You stay in control at every step.
 
 ## Quick start
 
@@ -62,63 +68,43 @@ bash setup.sh
 CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash scripts/run-nightly-scan.sh
 ```
 
-If the manual scan looks good, add the printed scheduler jobs using the new dispatcher prompts.
+If the manual scan looks good, add the printed scheduler jobs using the dispatcher prompts.
 
 ## Environment
 
-- `CLAWD_DIR` is optional. If unset, skillminer defaults to `~/clawd`.
-- `FORGE_RUNNER` defaults to `openclaw`, which stays local to the host.
-- `FORGE_RUNNER=claude` is an optional fallback that uses Claude CLI and sends prompt data to Anthropic's API. Only enable it if you understand that data leaves the host.
+- `CLAWD_DIR` — optional, defaults to `~/clawd`
+- `FORGE_RUNNER` — defaults to `openclaw` (local). Set to `claude` only if you accept that prompt data leaves the host.
 
 ## Commands
 
-skillminer is the product. `forge` is the command prefix.
+`forge` is the command prefix.
 
-- `forge show`
-- `forge review`
-- `forge accept <slug>`
-- `forge reject <slug> "reason"`
-- `forge defer <slug> "reason"`
-- `forge silence <slug> "reason"`
-- `forge unsilence <slug>`
-- `forge promote <slug>`
+- `forge show` — list current candidates
+- `forge review` — open the latest review file
+- `forge accept <slug>` — accept a candidate for the next morning write
+- `forge reject <slug> "reason"` — reject permanently
+- `forge defer <slug> "reason"` — defer with cooldown
+- `forge silence <slug> "reason"` — silence without cooldown
+- `forge unsilence <slug>` — resurface a silenced entry
+- `forge promote <slug>` — move a pending draft into live skills
 
 ## Manual triggers
 
-Use the new wrapper when you want to kick the scan or writer manually without remembering full paths.
+When you want a one-shot run without remembering full paths:
 
 ```bash
-skillminer scan
-skillminer write
-skillminer full
-skillminer status
-skillminer help
+skillminer scan     # run nightly scan now
+skillminer write    # run morning write now
+skillminer full     # scan + write in sequence
+skillminer status   # show current ledger state
+skillminer help     # show usage
 ```
 
-Typical use cases:
-- You just received a fresh memory file and do not want to wait for the nightly run.
-- Cami wants to trigger a scan or write through delegated exec.
-- Andy is on SSH and wants a short command instead of the full wrapper path.
-- You want a quick status check before deciding whether to review pending candidates.
+## Security
 
-Who can use it:
-- You directly over SSH
-- Cami via delegated exec
-- Andy via SSH
+- Slug validation gates every filesystem-path boundary (regex-enforced)
+- Atomic state writes with backup rotation and JSON validation
+- `flock`-based single-instance guarantee across all entry points
+- Memory files are treated as untrusted data in the nightly scan prompt
 
-When to use it:
-- Right after important memory landed
-- Before a manual review session
-- For debugging scheduler drift
-- When you want a one-shot `scan` or `full` run today
-
-## Flow
-
-```
-nightly scan  -> review file, cron announce delivery
-human decision -> accept / reject / defer / silence
-morning write -> draft into skills/_pending/, cron announce delivery
-human promote -> move draft into live skills/
-```
-
-See [USER_GUIDE.md](USER_GUIDE.md) for full usage.
+See [README.md](README.md) and [USER_GUIDE.md](USER_GUIDE.md) for full docs.

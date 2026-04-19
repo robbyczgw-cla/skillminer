@@ -1,4 +1,12 @@
 # Changelog
+## 0.4.4 - 2026-04-19
+- SKILL.md refocused as a professional public skill description
+- Removed internal agent-family references that leaked into the ClawHub-facing description
+- Removed version-specific hardening section (lives in CHANGELOG)
+- Removed internal-team-doc sections (Typical use cases, Who can use it)
+- Tightened the `description:` frontmatter field to one neutral summary sentence
+- Zero code, schema, or logic changes
+
 
 ## 0.4.3 - 2026-04-19
 - Fix: remove undefined `release_skillminer_lock` call in `run-morning-write.sh` slug pre-flight; the `flock -n` on FD 9 is released automatically on shell exit, no explicit release needed. Previously this produced exit 127 with set -e instead of the intended exit 4.
