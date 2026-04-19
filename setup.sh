@@ -27,6 +27,18 @@ fi
 
 NIGHTLY_CMD="export CLAWD_DIR=\"$CLAWD_DIR\" && bash \"$SKILL_DIR/scripts/run-nightly-scan.sh\""
 WRITE_CMD="export CLAWD_DIR=\"$CLAWD_DIR\" && bash \"$SKILL_DIR/scripts/run-morning-write.sh\""
+MANUAL_CMD="export CLAWD_DIR=\"$CLAWD_DIR\" && \"$SKILL_DIR/scripts/skillminer\""
+
+if [ "$EUID" -eq 0 ]; then
+  if [ -e /usr/local/bin/skillminer ] || [ -L /usr/local/bin/skillminer ]; then
+    SYMLINK_NOTE="Skipped /usr/local/bin/skillminer because it already exists. Review it manually before cleanup or replacement."
+  else
+    ln -s "$SKILL_DIR/scripts/skillminer" /usr/local/bin/skillminer
+    SYMLINK_NOTE="Installed /usr/local/bin/skillminer -> $SKILL_DIR/scripts/skillminer"
+  fi
+else
+  SYMLINK_NOTE="Not root, skipped /usr/local/bin/skillminer symlink install."
+fi
 
 cat <<EOF
 
@@ -38,6 +50,10 @@ Run one manual scan before adding any scheduler jobs:
 Manual wrappers:
   Nightly: $NIGHTLY_CMD
   Morning: $WRITE_CMD
+  Shortcut: $MANUAL_CMD <scan|write|full|status|help>
+
+Symlink setup:
+  $SYMLINK_NOTE
 
 Recommended scheduler pattern with your local timezone:
   - payload.kind: agentTurn

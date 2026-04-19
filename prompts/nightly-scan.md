@@ -33,6 +33,7 @@ Use injected values when present. Defaults if missing:
 - Silenced patterns do not appear as candidates or observations.
 - Cooldown is absolute until expiry.
 - Redact secrets if quoted.
+- Do not overwrite or backfill missing legacy observation trend fields. Existing observations without `previousOccurrences` or `previousDays` must be treated as `null` for trend display.
 
 ## Workflow
 
@@ -45,7 +46,7 @@ Use injected values when present. Defaults if missing:
 Read `$FORGE_DIR/state/state.json`.
 Expected:
 - valid JSON
-- `schema_version == "0.3"`
+- `schema_version == "0.4"`
 - arrays present: `candidates`, `observations`, `rejected`, `deferred`, `silenced`
 
 If validation fails:
@@ -63,12 +64,24 @@ Treat these as excluded from new-candidate proposal:
 
 Match by semantic intent plus trigger phrases, not slug alone. If a resurfacing pattern matches a cooldown entry, reuse that historical id in reporting and skip proposal.
 
-### 4) Build existing skill registry
-For every directory in `$CLAWD_DIR/skills/` except names starting with `_`:
-- read `SKILL.md` frontmatter
-- collect `name`, `description`, `triggers`
+Also keep a copy of the pre-scan `observations[]` before any overwrite. For each new observation written this run, lookup the same semantic/id match in the old observations list and carry forward:
+- `previousOccurrences = old.occurrences` when found, else `null`
+- `previousDays = old.daysSeen.length` when found, else `null`
 
-This registry is the anti-dup source of truth.
+### 4) Build existing skill registry and portfolio snapshot
+For every directory in `$CLAWD_DIR/skills/` except:
+- names starting with `_`
+- `skillminer`
+
+Read `SKILL.md` frontmatter when present and collect `name`, `version`, `description`, and `triggers`.
+
+Also compute live portfolio stats for the summary:
+- `totalSkills`: count only real user-facing skills with an actual `SKILL.md`
+- `skillminerProducedLast30d`: count skills whose `SKILL.md` creation date from `git log --follow --diff-filter=A --format=%aI -- <path>` is within the last 30 days
+- `activeCandidatesPending`: count `candidates[]` with `status == "pending"`
+- `activeCandidatesAccepted`: count `candidates[]` with `status == "accepted"`
+
+If git creation-date lookup fails for a skill, skip that skill from the `skillminerProducedLast30d` count rather than guessing.
 
 ### 5) Read memory files
 For each day in the window:
@@ -117,6 +130,11 @@ Write `$FORGE_DIR/state/review/$TODAY.md` with these sections in this order:
 ```markdown
 # Skill-Miner Scan — $TODAY
 
+## Portfolio (state)
+- Total skills: ...
+- Skillminer-produced (last 30d): ...
+- Active candidates: ... pending, ... accepted
+
 ## Summary
 - Window: ...
 - Existing skills registry: ...
@@ -136,9 +154,10 @@ Write `$FORGE_DIR/state/review/$TODAY.md` with these sections in this order:
 - **Source citations:** ...
 - **Coverage check:** ...
 - **Why a skill and not just memory:** ...
+- **Pending age:** pending since 2d (stale in 12d)
 
 ## Sub-threshold observations
-- **<slug>** — ...
+- **<slug>** NEU (1→2 days, 2→3 occ) — ...
 
 ## Silenced (skipped permanently)
 | id | silenced on | reason | activity this scan |
@@ -160,6 +179,22 @@ Write `$FORGE_DIR/state/review/$TODAY.md` with these sections in this order:
 
 Empty sections are allowed, but all sections must exist.
 
+Display rules:
+- Portfolio section must be first section after the title.
+- For each pending candidate already in the ledger, compute `pendingSinceDays` from `createdAt` to `TODAY` in whole days.
+- Mark a pending candidate as stale when `pendingSinceDays >= 14`.
+- Candidate display format should include aging text, for example:
+  - `**verify-bindings-post-patch** — 6 occurrences, 4 Tage, pending seit 2d (stale in 12d)`
+  - if stale: `pending seit 16d (STALE)`
+- For each observation, compute a trend marker from occurrence diff versus the previous observation entry:
+  - `prev == null` → `NEU`
+  - `current > prev` → `↑`
+  - `current == prev` → `→`
+  - `current < prev` → `↓`
+- Observation display format:
+  - `- **gh-copilot-token-sync** ↑ (1→2 days, 2→3 occ) — <intentSummary>`
+  - when previous values are null, show `NEU` and still include the current counts in prose if helpful
+
 ### 10) Update ledger
 Write back `$FORGE_DIR/state/state.json` with 2-space indentation.
 
@@ -176,7 +211,9 @@ For new candidates, keep this key order:
 `id, type, intentSummary, firstSeen, lastSeen, daysSeen, occurrences, confidence, status, written, triggerPhrases, proposedSteps, coverageRisk, coverageOverlaps, sourceCitations, rejectedReason, resurfacedFrom, resurfacedFromDate, createdAt, updatedAt`
 
 Observation shape:
-`id, intentSummary, occurrences, daysSeen, lastSeen, triggerPhrases, sourceCitations, proposedSteps, reason`
+`id, intentSummary, occurrences, previousOccurrences, daysSeen, previousDays, lastSeen, triggerPhrases, sourceCitations, proposedSteps, reason`
+
+For observations sourced from old schema entries that lack the previous-fields, write explicit `null` values instead of inventing history.
 
 ### 11) Health sentinel
 Write `$FORGE_DIR/state/.last-success` with the current UTC timestamp.

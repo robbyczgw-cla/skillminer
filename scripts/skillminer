@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}"
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+STATE_DIR="$SKILL_DIR/state"
+STATE_FILE="$STATE_DIR/state.json"
+LAST_SCAN_FILE="$STATE_DIR/.last-success"
+LAST_WRITE_FILE="$STATE_DIR/.last-write"
+
+usage() {
+  cat <<EOF
+skillminer manual runner
+
+Usage:
+  skillminer scan     Run the nightly scan wrapper
+  skillminer write    Run the morning write wrapper
+  skillminer full     Run scan, then write
+  skillminer status   Show last scan/write timestamps and pending count
+  skillminer help     Show this help
+EOF
+}
+
+show_status() {
+  local last_scan="missing"
+  local last_write="missing"
+  local pending_count="0"
+
+  if [ -f "$LAST_SCAN_FILE" ]; then
+    last_scan="$(cat "$LAST_SCAN_FILE")"
+  fi
+
+  if [ -f "$LAST_WRITE_FILE" ]; then
+    last_write="$(cat "$LAST_WRITE_FILE")"
+  fi
+
+  if [ -f "$STATE_FILE" ]; then
+    pending_count="$(jq '[.candidates[] | select(.status == "pending")] | length' "$STATE_FILE")"
+  fi
+
+  cat <<EOF
+skillminer status
+- CLAWD_DIR: $CLAWD_DIR
+- last_scan: $last_scan
+- last_write: $last_write
+- pending_candidates: $pending_count
+EOF
+}
+
+run_scan() {
+  if ! bash "$SKILL_DIR/scripts/run-nightly-scan.sh"; then
+    exit 2
+  fi
+}
+
+run_write() {
+  if ! bash "$SKILL_DIR/scripts/run-morning-write.sh"; then
+    exit 2
+  fi
+}
+
+cmd="${1:-help}"
+
+case "$cmd" in
+  scan)
+    run_scan
+    ;;
+  write)
+    run_write
+    ;;
+  full)
+    run_scan
+    run_write
+    ;;
+  status)
+    show_status
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 1
+    ;;
+esac

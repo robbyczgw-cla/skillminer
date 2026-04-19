@@ -1,7 +1,7 @@
 ---
 name: skillminer
-version: 0.2.1
-description: "Suggest reusable skills from recurring local memory patterns. Keeps a human review gate, drafts only to skills/_pending/, defaults to the local OpenClaw runner, and supports an optional Claude fallback. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
+version: 0.3.0
+description: "Suggest reusable skills from recurring local memory patterns. Keeps a human review gate, drafts only to skills/_pending/, defaults to the local OpenClaw runner, supports an optional Claude fallback, and now adds richer scan summaries plus manual trigger commands. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
 metadata:
   openclaw:
     requires:
@@ -25,6 +25,7 @@ triggers:
   - "was hat skillminer gefunden"
   - "annehmen als skill"
   - "ablehnen skill"
+  - "letzen skillminer scan"
   - "letzten skillminer scan"
 ---
 
@@ -40,6 +41,7 @@ skillminer suggests reusable skills from recurring work in your local memory fil
 - Claude fallback is optional and external
 - Notifications are off by default
 - Review files are written locally even when notifications stay off
+- Nightly scan summaries now include trend arrows, pending-age hints, and a live portfolio snapshot
 
 ## Quick start
 
@@ -64,6 +66,35 @@ skillminer is the product. `forge` is the command prefix.
 - `forge silence <slug> "reason"`
 - `forge unsilence <slug>`
 - `forge promote <slug>`
+
+## Manual triggers
+
+Use the new wrapper when you want to kick the scan or writer manually without remembering full paths.
+
+```bash
+skillminer scan
+skillminer write
+skillminer full
+skillminer status
+skillminer help
+```
+
+Typical use cases:
+- You just received a fresh memory file and do not want to wait for the nightly run.
+- Cami wants to trigger a scan or write through delegated exec.
+- Andy is on SSH and wants a short command instead of the full wrapper path.
+- You want a quick status check before deciding whether to review pending candidates.
+
+Who can use it:
+- You directly over SSH
+- Cami via delegated exec
+- Andy via SSH
+
+When to use it:
+- Right after important memory landed
+- Before a manual review session
+- For debugging scheduler drift
+- When you want a one-shot `scan` or `full` run today
 
 ## Flow
 

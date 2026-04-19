@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0 - 2026-04-19
+- Add observation trend fields to the 0.4 ledger schema: `previousOccurrences` and `previousDays`, with prompt guidance to treat legacy missing values as `null`
+- Expand nightly scan reporting with observation trend arrows, pending-candidate ledger aging, and a live portfolio snapshot section
+- Add `scripts/skillminer` manual wrapper with `scan`, `write`, `full`, `status`, and `help` subcommands
+- Update `setup.sh`, `SKILL.md`, and `USER_GUIDE.md` to document manual triggers and optional `/usr/local/bin/skillminer` symlink installation
+- Keep the 0.2.1 scheduled-run notify fix intact: no prompt-level notifications, cron announce delivery only
+
 ## 0.2.1 - 2026-04-19
 - Fix notify hang in scheduled runs by removing inner notification steps from `prompts/nightly-scan.md` and `prompts/skill-writer.md`
 - Scheduled notifications now belong to cron `delivery.mode: announce`, not prompt-level `openclaw message send`
@@ -48,6 +55,6 @@
 - Schema 0.3 ledger with sub-threshold observation tracking
 - Natural language interface: accept, reject, defer, silence, promote, show
 - Configurable scan window, thresholds, and cooldown via config
-- Notifications support (configurable channel/thread)
+- Notifications support (configurable channel)
 - OpenClaw runner (default) + Claude CLI fallback via FORGE_RUNNER env
 - .gitignore and .clawhubignore — state/ and local config excluded

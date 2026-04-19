@@ -6,6 +6,11 @@
 
 skillminer scans recent local memory files, spots recurring work patterns, and suggests skills you may want to keep. It is local by default, does not auto-activate anything, and does not notify you unless you enable notifications. If you switch to the Claude fallback runner, that runner is external.
 
+The nightly scan now also reports:
+- A portfolio snapshot of your live skills
+- Aging info for pending candidates
+- Trend arrows for sub-threshold observations
+
 ## Daily cycle
 
 ```
@@ -104,6 +109,8 @@ bash setup.sh
 
 This creates the local state file if missing, copies the editable local config if missing, and prints the exact scheduler commands for your install path.
 
+If `setup.sh` runs as root and `/usr/local/bin/skillminer` does not already exist, it also installs a convenience symlink to `scripts/skillminer`.
+
 **3. Run one manual scan first**
 ```bash
 CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash scripts/run-nightly-scan.sh
@@ -165,13 +172,34 @@ Edit `config/skill-miner.config.local.json`:
 
 Run a scan manually:
 ```bash
-CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash scripts/run-nightly-scan.sh
+skillminer scan
 ```
 
 Run the writer manually:
 ```bash
-CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash scripts/run-morning-write.sh
+skillminer write
 ```
+
+Run both sequentially:
+```bash
+skillminer full
+```
+
+See current timestamps and pending count:
+```bash
+skillminer status
+```
+
+Show the subcommand help:
+```bash
+skillminer help
+```
+
+When to use manual triggers:
+- A new important memory file just landed and you do not want to wait until 02:00 UTC
+- You want to test the richer scan output today
+- Cami wants to trigger scan or write through delegated exec
+- Andy is on SSH and wants a short path-style command
 
 ## Notifications
 

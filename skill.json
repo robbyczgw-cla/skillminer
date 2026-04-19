@@ -1,7 +1,7 @@
 {
   "slug": "skillminer",
   "name": "Skill Miner",
-  "version": "0.1.7",
-  "description": "Optional local memory scan that suggests reusable skills and drafts accepted ones for human review.",
+  "version": "0.3.0",
+  "description": "Optional local memory scan that suggests reusable skills, adds richer reporting, and exposes manual trigger commands for scan/write/status.",
   "tags": ["productivity", "meta", "skills", "automation"]
 }

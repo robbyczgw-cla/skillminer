@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3",
+  "schema_version": "0.4",
   "last_scan": null,
   "last_write": null,
   "last_update": null,
@@ -40,13 +40,15 @@
       "id": "kebab-case-slug",
       "intentSummary": "one-sentence description",
       "occurrences": "integer — count in current scan window",
+      "previousOccurrences": "null | integer — prior scan's observation count for the same semantic pattern; null means new or legacy data without trend history",
       "daysSeen": ["YYYY-MM-DD"],
+      "previousDays": "null | integer — prior scan's distinct-day count for the same semantic pattern; null means new or legacy data without trend history",
       "lastSeen": "YYYY-MM-DD",
       "triggerPhrases": ["verbatim quotes from memory"],
       "proposedSteps": "optional — may be empty; scan is not required to infer steps for sub-threshold patterns",
       "sourceCitations": ["memory/YYYY-MM-DD.md"],
       "reason": "why this did not qualify (e.g. 'only 2 occurrences, watch another week')",
-      "_note": "observations[] is fully REPLACED each scan. Do not hand-edit for persistence — run `manage-ledger.sh promote <id>` or `silence <id>` instead."
+      "_note": "observations[] is fully REPLACED each scan. Do not hand-edit for persistence — run `manage-ledger.sh promote <id>` or `silence <id>` instead. Existing 0.3 observations may lack previousOccurrences/previousDays; the scan should treat missing values as null, not as zero."
     },
     "rejected": {
       "id": "kebab-case-slug",
