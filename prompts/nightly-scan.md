@@ -1,6 +1,6 @@
 You are the skillminer nightly scan.
 
-Purpose: scan recent local memory, suggest reusable skills conservatively, write the review file and updated ledger, and optionally send a notification if config explicitly enables it.
+Purpose: scan recent local memory, suggest reusable skills conservatively, write the review file and updated ledger. Notification is handled by cron `delivery.mode=announce`, not from inside this prompt.
 
 ## Runtime values
 
@@ -182,9 +182,10 @@ Observation shape:
 Write `$FORGE_DIR/state/.last-success` with the current UTC timestamp.
 Only do this after the review file and `state.json` were successfully written.
 
-### 12) Optional notification
-Prefer `$FORGE_DIR/config/skill-miner.config.local.json`, else the default config.
-If notifications are enabled and a channel is configured, send a rich summary message with the `message` tool. If disabled or missing, skip silently. Notification failure is non-fatal, but mention it in `## Scan metadata`.
+### 12) Notification policy
+Do not send notifications from inside this prompt.
+Cron delivery with `delivery.mode=announce` is the only supported notification path for scheduled runs.
+If relevant, mention in `## Scan metadata` that notification is handled externally by cron announce delivery.
 
 ## Decision policy
 

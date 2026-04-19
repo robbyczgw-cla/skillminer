@@ -1,6 +1,6 @@
 ---
 name: skillminer
-version: 0.2.0
+version: 0.2.1
 description: "Suggest reusable skills from recurring local memory patterns. Keeps a human review gate, drafts only to skills/_pending/, defaults to the local OpenClaw runner, and supports an optional Claude fallback. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
 metadata:
   openclaw:
@@ -68,9 +68,9 @@ skillminer is the product. `forge` is the command prefix.
 ## Flow
 
 ```
-nightly scan  -> review file, optional notification
+nightly scan  -> review file, cron announce delivery
 human decision -> accept / reject / defer / silence
-morning write -> draft into skills/_pending/
+morning write -> draft into skills/_pending/, cron announce delivery
 human promote -> move draft into live skills/
 ```
 

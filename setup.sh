@@ -35,15 +35,18 @@ skillminer setup complete.
 Run one manual scan before adding any scheduler jobs:
   $NIGHTLY_CMD
 
-Then add these scheduler entries with your local timezone:
+Manual wrappers:
+  Nightly: $NIGHTLY_CMD
+  Morning: $WRITE_CMD
 
-Nightly scan  (0 4 * * *):
-  $NIGHTLY_CMD
+Recommended scheduler pattern with your local timezone:
+  - payload.kind: agentTurn
+  - payload.message: inline contents of prompts/nightly-scan.md or prompts/skill-writer.md
+  - delivery.mode: announce
+  - delivery target: your channel/topic
 
-Morning write (0 10 * * *):
-  $WRITE_CMD
-
-Notifications are disabled by default.
+Do not schedule the bash wrappers for routine cron runs.
+Notifications are handled by cron announce delivery.
 Review output is always written locally under:
   $SKILL_DIR/state/review/
   $SKILL_DIR/state/write-log/

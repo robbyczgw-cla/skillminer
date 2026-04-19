@@ -2,7 +2,7 @@
 
 > Your AI assistant keeps solving the same problems. skillminer notices — and suggests turning them into reusable skills.
 
-**Version:** 0.2.0 | **Runner:** OpenClaw-native | **Schema:** 0.3
+**Version:** 0.2.1 | **Runner:** OpenClaw-native | **Schema:** 0.3
 
 You build patterns. Every day, in every conversation. skillminer watches your local memory files, spots recurring work, and surfaces the ones worth keeping. No auto-activation, no cloud sync, no noise by default. Just a morning suggestion waiting in your inbox when something actually deserves to become a skill.
 
@@ -14,11 +14,12 @@ You build patterns. Every day, in every conversation. skillminer watches your lo
 04:00 — nightly scan   reads recent memory/YYYY-MM-DD.md files
                        detects recurring task patterns
                        writes a review file to state/review/
-                       (optional: notifies you if enabled)
+                       cron can announce the result
                        ↓
         YOU DECIDE     forge accept / reject / defer / silence
                        ↓
 10:00 — morning write  drafts a SKILL.md into skills/_pending/<slug>/
+                       cron can announce the result
                        you review it, promote it, ship it
 ```
 
@@ -101,9 +102,9 @@ Edit `config/skill-miner.config.local.json` (git-ignored, your personal values):
 
 | Key | Default | Description |
 |---|---|---|
-| `notifications.enabled` | `false` | Off by default — review files are still written locally |
-| `notifications.channel` | `null` | Channel for optional push notifications |
-| `notifications.threadId` | `null` | Optional thread/topic ID |
+| `notifications.enabled` | `false` | Legacy setting. Scheduled notifications should use cron `delivery.mode: "announce"` instead |
+| `notifications.channel` | `null` | Legacy setting. Keep unset when using cron announce delivery |
+| `notifications.threadId` | `null` | Legacy setting. Keep unset when using cron announce delivery |
 | `runner.default` | `"openclaw"` | `"openclaw"` or `"claude"` |
 | `runner.openclaw_agent` | `"main"` | OpenClaw agent used for the local runner |
 | `scan.windowDays` | `10` | Days of memory to scan each night |
@@ -124,14 +125,14 @@ By default, skillminer is silent. It still writes everything locally:
 - Scan logs: `state/logs/scan-*.log`
 - Write logs: `state/write-log/YYYY-MM-DD.md`
 
-Enable `notifications.enabled` only if you want chat delivery on top of that.
+For scheduled runs, use cron `delivery.mode: "announce"` for chat delivery. Do not send notifications from inside the prompts.
 
 ---
 
 ## Troubleshooting
 
 **No notification after the scan?**
-Expected — `notifications.enabled` is `false` by default. Check the local files first.
+Check the cron job delivery config first. The supported scheduled pattern is cron `delivery.mode: "announce"` pointing at your channel/topic.
 
 **Nothing drafted at 10:00?**
 You need to accept at least one candidate before the morning write runs:

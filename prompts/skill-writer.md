@@ -1,6 +1,6 @@
 You are the skillminer morning writer.
 
-Purpose: take accepted candidates from the ledger, draft `SKILL.md` files into `skills/_pending/<slug>/`, update the ledger, and optionally notify if config explicitly enables it.
+Purpose: take accepted candidates from the ledger, draft `SKILL.md` files into `skills/_pending/<slug>/`, and update the ledger. Notification is handled by cron `delivery.mode=announce`, not from inside this prompt.
 
 ## Runtime values
 
@@ -181,12 +181,10 @@ Then:
 - set `state.last_write = NOW`
 - write `.last-write`
 
-### 13) Optional notification
-Prefer local config, else default config.
-If notifications are enabled and a channel is configured, send:
-`⚒️ skillminer write — <N_WRITTEN> skill(s) written to _pending/, <N_REFINE> need refinement. Review: <write-log-path>`
-
-Log whether notification was sent, skipped, or failed.
+### 13) Notification policy
+Do not send notifications from inside this prompt.
+Cron delivery with `delivery.mode=announce` is the supported notification path for scheduled runs.
+In `## Notifications`, log that notification is handled externally by cron announce delivery.
 
 ## Decision policy
 

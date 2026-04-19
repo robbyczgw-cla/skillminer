@@ -118,16 +118,29 @@ cat state/logs/scan-*.log | tail -n 40
 **4. Only then add the two scheduler jobs**
 
 Use your local timezone in the scheduler configuration, for example `<Your/Timezone>`.
+Use `payload.kind: "agentTurn"` with the full prompt inline, and let cron handle delivery via `delivery.mode: "announce"`.
+Do not wrap scheduled runs in `bash ...run-*.sh`.
 
-Nightly scan, `0 4 * * *` `<Your/Timezone>`:
-```bash
-export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "${CLAWD_DIR:-$HOME/clawd}/skills/skillminer/scripts/run-nightly-scan.sh"
+Nightly scan example:
+```json
+{
+  "name": "skillminer-nightly-scan",
+  "schedule": { "cron": "0 4 * * *", "timezone": "<Your/Timezone>" },
+  "payload": {
+    "kind": "agentTurn",
+    "message": "<contents of prompts/nightly-scan.md, optionally with a runtime preamble>",
+    "model": "github-copilot/claude-sonnet-4.6",
+    "timeoutSeconds": 900
+  },
+  "delivery": {
+    "mode": "announce",
+    "channel": "telegram",
+    "to": "telegram:<chat-id>:topic:<topic-id>"
+  }
+}
 ```
 
-Morning write, `0 10 * * *` `<Your/Timezone>`:
-```bash
-export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" && bash "${CLAWD_DIR:-$HOME/clawd}/skills/skillminer/scripts/run-morning-write.sh"
-```
+Morning write uses the same pattern with `prompts/skill-writer.md` as the inline `message`.
 
 ## Configuration
 
@@ -142,9 +155,9 @@ Edit `config/skill-miner.config.local.json`:
 | `thresholds.low` | `3` | Low-confidence candidate band starts here |
 | `thresholds.medium` | `4` | Medium-confidence candidate band starts here |
 | `thresholds.high` | `6` | High-confidence candidate band starts here |
-| `notifications.enabled` | `false` | Notifications are off by default. Review files still get written locally. |
-| `notifications.channel` | `null` | Channel for optional notifications |
-| `notifications.threadId` | `null` | Optional thread/topic ID |
+| `notifications.enabled` | `false` | Legacy setting. Scheduled notifications should come from cron `delivery.mode: "announce"` instead. |
+| `notifications.channel` | `null` | Legacy setting. Leave unset for cron announce delivery. |
+| `notifications.threadId` | `null` | Legacy setting. Leave unset for cron announce delivery. |
 | `runner.default` | `openclaw` | `openclaw` or `claude` |
 | `runner.openclaw_agent` | `main` | OpenClaw agent ID for the local runner |
 
@@ -162,9 +175,8 @@ CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash scripts/run-morning-write.sh
 
 ## Notifications
 
-No notification is sent by default. If notifications are disabled, skillminer still works, it just writes files locally.
-
-Look here first:
+Scheduled notifications should come from cron `delivery.mode: "announce"`, not from inside the prompts.
+If no announcement arrives, check the cron job delivery target first, then look at the local files:
 ```bash
 ls state/review/
 ls state/write-log/
@@ -185,8 +197,9 @@ mv "${CLAWD_DIR:-$HOME/clawd}/skills/_pending/my-skill" "${CLAWD_DIR:-$HOME/claw
 ## Troubleshooting
 
 **No chat notification received**
-- Expected if `notifications.enabled=false`
-- Check local review and log files first
+- Check cron `delivery.mode` and `delivery.to` first
+- The supported scheduled target is your desired channel/topic via cron announce delivery
+- Then check local review and log files
 
 **Nothing was drafted at 10:00**
 - Check that you accepted at least one candidate before 10:00

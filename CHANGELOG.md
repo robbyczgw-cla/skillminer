@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1 - 2026-04-19
+- Fix notify hang in scheduled runs by removing inner notification steps from `prompts/nightly-scan.md` and `prompts/skill-writer.md`
+- Scheduled notifications now belong to cron `delivery.mode: announce`, not prompt-level `openclaw message send`
+- Recommended cron integration now uses `payload.kind: agentTurn` with inline prompt content instead of `bash run-*.sh` wrappers
+- Update README, USER_GUIDE, and setup output to document the supported cron pattern
+
 ## 0.2.0
 - Rewrite intro — honest language: optional local scan, no auto-activate, no notifications by default, Claude fallback is external
 - Unify naming — Scout/Scribe removed from all user-facing docs, skillminer is the product, `forge` is the command
