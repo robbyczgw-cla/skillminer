@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.3 - 2026-04-19
+- Fixed: removed literal injection-example phrase from nightly-scan.md prompt that triggered ClawHub static scanner false positive. Framing preserved, wording neutralized.
+
 ## 0.3.2 - 2026-04-19
 - Add wrapper-level atomic tmp-write handling for `state.json`, review files, and write logs, including backup rotation and JSON validation rollback
 - Add parent-aware `flock` locking across `skillminer`, `run-nightly-scan.sh`, and `run-morning-write.sh` with exit code `3` for lock contention
