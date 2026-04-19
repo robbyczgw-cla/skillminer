@@ -8,6 +8,9 @@ STATE_FILE="$STATE_DIR/state.json"
 LAST_SCAN_FILE="$STATE_DIR/.last-success"
 LAST_WRITE_FILE="$STATE_DIR/.last-write"
 
+# shellcheck source=/dev/null
+source "$SKILL_DIR/scripts/lib/atomic-write.sh"
+
 usage() {
   cat <<EOF
 skillminer manual runner
@@ -48,27 +51,36 @@ EOF
 }
 
 run_scan() {
-  if ! bash "$SKILL_DIR/scripts/run-nightly-scan.sh"; then
-    exit 2
-  fi
+  local rc=0
+  SKILLMINER_LOCK_HELD=1 bash "$SKILL_DIR/scripts/run-nightly-scan.sh" || rc=$?
+  return "$rc"
 }
 
 run_write() {
-  if ! bash "$SKILL_DIR/scripts/run-morning-write.sh"; then
-    exit 2
-  fi
+  local rc=0
+  SKILLMINER_LOCK_HELD=1 bash "$SKILL_DIR/scripts/run-morning-write.sh" || rc=$?
+  return "$rc"
 }
 
 cmd="${1:-help}"
 
 case "$cmd" in
   scan)
+    if ! acquire_skillminer_lock; then
+      exit 3
+    fi
     run_scan
     ;;
   write)
+    if ! acquire_skillminer_lock; then
+      exit 3
+    fi
     run_write
     ;;
   full)
+    if ! acquire_skillminer_lock; then
+      exit 3
+    fi
     run_scan
     run_write
     ;;

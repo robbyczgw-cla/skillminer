@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2 - 2026-04-19
+- Add wrapper-level atomic tmp-write handling for `state.json`, review files, and write logs, including backup rotation and JSON validation rollback
+- Add parent-aware `flock` locking across `skillminer`, `run-nightly-scan.sh`, and `run-morning-write.sh` with exit code `3` for lock contention
+- Add conservative memory-as-data security framing in the nightly scan prompt plus oversized-memory warnings in the nightly wrapper
+- Document production hardening, `flock` requirement, and the new non-zero exit codes
+
 ## 0.3.1 - 2026-04-19
 - Fix ClawHub scanner issues by adding `git` to required binaries
 - Mark `CLAWD_DIR` as optional in skill metadata and align docs around the `~/clawd` default

@@ -8,11 +8,23 @@ set -euo pipefail
 export CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}"
 SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FORGE_DIR="$SKILL_DIR"
-LOG_DIR="$FORGE_DIR/state/logs"
-mkdir -p "$LOG_DIR"
+STATE_DIR="$FORGE_DIR/state"
+STATE_FILE="$STATE_DIR/state.json"
+WRITE_LOG_DIR="$STATE_DIR/write-log"
+LOG_DIR="$STATE_DIR/logs"
+mkdir -p "$LOG_DIR" "$WRITE_LOG_DIR"
 
-STAMP="$(date -u +%Y-%m-%dT%H-%M-%SZ)"
-LOG="$LOG_DIR/write-$STAMP.log"
+# shellcheck source=/dev/null
+source "$FORGE_DIR/scripts/lib/atomic-write.sh"
+if ! acquire_skillminer_lock; then
+  exit 3
+fi
+
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+TODAY="$(date -u +%Y-%m-%d)"
+LOG="$LOG_DIR/write-${TODAY}T$(date -u +%H-%M-%SZ).log"
+BACKUP_FILE="$(create_state_backup "$STATE_FILE" "$STAMP")"
+rotate_state_backups "$STATE_FILE"
 
 FORGE_RUNNER="${FORGE_RUNNER:-openclaw}"
 
@@ -46,8 +58,10 @@ cd "$CLAWD_DIR"
   echo "---"
 } > "$LOG"
 
+set +e
 if [ "$FORGE_RUNNER" = "openclaw" ]; then
   openclaw agent --agent "$OC_AGENT" --message "$(cat "$PROMPT_FILE")" >> "$LOG" 2>&1
+  EXIT=$?
 elif [ "$FORGE_RUNNER" = "claude" ]; then
   # Note: Claude Code blocks file-read permission bypass as root (security policy).
   # The claude runner requires running as a non-root user. As root, use FORGE_RUNNER=openclaw.
@@ -63,17 +77,41 @@ elif [ "$FORGE_RUNNER" = "claude" ]; then
     --permission-mode auto \
     --max-budget-usd "$MAX_BUDGET_USD" \
     < "$PROMPT_FILE" >> "$LOG" 2>&1
+  EXIT=$?
 else
   echo "ERROR: unknown FORGE_RUNNER=$FORGE_RUNNER (expected: openclaw | claude)" >> "$LOG"
-  rm -f "$PROMPT_FILE"
-  exit 1
+  EXIT=1
 fi
+set -e
 
-EXIT=$?
 rm -f "$PROMPT_FILE"
+
+VALIDATION_EXIT=0
+FINAL_EXIT="$EXIT"
+if [ "$EXIT" -eq 0 ]; then
+  if ! atomic_text_write "$WRITE_LOG_DIR/$TODAY.md.tmp" "$WRITE_LOG_DIR/$TODAY.md"; then
+    echo "[skillminer] ERROR: morning write-log tmp failed non-empty check, restored backup" >> "$LOG"
+    cp "$BACKUP_FILE" "$STATE_FILE"
+    VALIDATION_EXIT=2
+  elif ! atomic_json_write "$STATE_FILE.tmp" "$STATE_FILE" "$BACKUP_FILE"; then
+    echo "[skillminer] ERROR: morning state tmp failed JSON validation, restored backup" >> "$LOG"
+    VALIDATION_EXIT=2
+  elif ! atomic_text_write "$STATE_DIR/.last-write.tmp" "$STATE_DIR/.last-write"; then
+    echo "[skillminer] ERROR: morning .last-write tmp failed non-empty check, restored backup" >> "$LOG"
+    cp "$BACKUP_FILE" "$STATE_FILE"
+    VALIDATION_EXIT=2
+  elif ! jq -e . "$STATE_FILE" >/dev/null 2>&1; then
+    echo "[skillminer] ERROR: morning state validation failed after rename, restored backup" >> "$LOG"
+    cp "$BACKUP_FILE" "$STATE_FILE"
+    VALIDATION_EXIT=2
+  fi
+fi
+if [ "$VALIDATION_EXIT" -ne 0 ]; then
+  FINAL_EXIT="$VALIDATION_EXIT"
+fi
 {
   echo "---"
-  echo "exit: $EXIT"
+  echo "exit: $FINAL_EXIT"
   echo "finished: $(date -u --iso-8601=seconds)"
 } >> "$LOG"
 
@@ -81,4 +119,4 @@ rm -f "$PROMPT_FILE"
 find "$LOG_DIR" -name 'write-*.log' -type f -printf '%T@ %p\n' | \
   sort -n | head -n -30 | cut -d' ' -f2- | xargs -r rm -f
 
-exit $EXIT
+exit "$FINAL_EXIT"

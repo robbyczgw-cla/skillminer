@@ -163,7 +163,9 @@ For each validated candidate:
   - `updatedAt: NOW`
 
 ### 12) Write log and persist state
-Write `$FORGE_DIR/state/write-log/$TODAY.md` with these sections in order:
+Write `$FORGE_DIR/state/write-log/$TODAY.md.tmp`. After writing, re-read the tmp file and confirm it is non-empty. The wrapper will atomically rename it to `$TODAY.md`.
+
+Use these sections in order:
 - `## Summary`
 - `## Written`
 - `## Refinement needed`
@@ -177,9 +179,11 @@ Write `$FORGE_DIR/state/write-log/$TODAY.md` with these sections in order:
 Keep empty sections with `_none_`.
 
 Then:
-- write updated `state.json` with 2-space indentation
+- write updated state to `$FORGE_DIR/state/state.json.tmp` with 2-space indentation, NOT `state.json` directly
+- re-read `state/state.json.tmp` and verify it is valid JSON; if validation fails, output `ERROR` and exit without further mutations
 - set `state.last_write = NOW`
-- write `.last-write`
+- write `$FORGE_DIR/state/.last-write.tmp`
+- only after the tmp files are valid should the wrapper atomically rename them into place
 
 ### 13) Notification policy
 Do not send notifications from inside this prompt.

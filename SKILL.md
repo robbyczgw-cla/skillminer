@@ -1,11 +1,11 @@
 ---
 name: skillminer
-version: 0.3.1
-description: "Suggest reusable skills from recurring local memory patterns. Keeps a human review gate, drafts only to skills/_pending/, defaults to the local OpenClaw runner, supports an optional external Claude fallback, and now adds richer scan summaries plus manual trigger commands. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
+version: 0.3.2
+description: "Suggest reusable skills from recurring local memory patterns. Keeps a human review gate, drafts only to skills/_pending/, defaults to the local OpenClaw runner, supports an optional external Claude fallback, and now adds richer scan summaries, manual trigger commands, atomic state writes, flock locking, and memory-as-data framing. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
 metadata:
   openclaw:
     requires:
-      bins: ["jq", "bash", "date", "git", "openclaw"]
+      bins: ["jq", "bash", "date", "git", "openclaw", "flock"]
       env:
         CLAWD_DIR: optional
     note: "The skill auto-detects its install location. CLAWD_DIR defaults to ~/clawd if unset and is used only for workspace memory files plus skills/_pending/ output. The default runner is openclaw (local only, no data leaves the host). FORGE_RUNNER=claude is an optional external fallback that uses Claude CLI and sends data to Anthropic's API. Only enable it if you understand that data leaves the host. Never activates skills automatically."
@@ -43,6 +43,14 @@ skillminer suggests reusable skills from recurring work in your local memory fil
 - Notifications are off by default
 - Review files are written locally even when notifications stay off
 - Nightly scan summaries now include trend arrows, pending-age hints, and a live portfolio snapshot
+
+## Production hardening (0.3.2)
+
+- Atomic tmp-write plus wrapper validation for `state.json`
+- Atomic promotion for review and write-log files
+- Parent/child `flock` locking to prevent overlapping runs
+- Conservative memory-as-data framing against prompt injection attempts
+- Exit code `2` for validation or atomic-write failures, `3` for lock contention
 
 ## Quick start
 

@@ -168,6 +168,12 @@ Edit `config/skill-miner.config.local.json`:
 | `runner.default` | `openclaw` | `openclaw` or `claude` |
 | `runner.openclaw_agent` | `main` | OpenClaw agent ID for the local runner |
 
+## Exit codes
+
+- `0`: success
+- `2`: validation or atomic-write failure, wrapper restored the last `state.json` backup
+- `3`: skipped because another skillminer instance already holds the lock
+
 ## Manual runs
 
 Run a scan manually:
