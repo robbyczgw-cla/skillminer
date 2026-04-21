@@ -51,7 +51,7 @@ If validation fails:
 Before writing skills, normalize candidates whose `status` was manually changed to `rejected` or `deferred`:
 - copy them into `rejected[]` or `deferred[]`
 - preserve `intentSummary` and `triggerPhrases` when present
-- set `rejectedAt`/`deferredAt` to the candidate's `updatedAt` date if present, else TODAY
+- set `rejectedAt`/`deferredAt` to the `YYYY-MM-DD` date portion of the candidate's `updatedAt` if present (ISO-8601 split on `T`, keep only the first segment), else TODAY. These fields are date-only per schema; never stamp the full ISO-8601 timestamp — it would pass JSON validation but fail cooldown comparisons against `date +%F`.
 - log the date used and whether it was inferred vs. stamped
 - remove them from `candidates[]`
 - log the sweep

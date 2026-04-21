@@ -31,9 +31,10 @@ LOG="$LOG_DIR/write-${TODAY}T$(date -u +%H-%M-%SZ).log"
 # Bug 6: remove stale tmps from any prior crashed run before creating a fresh backup
 rm -f "$STATE_FILE.tmp" "$WRITE_LOG_DIR/$TODAY.md.tmp" \
       "$STATE_DIR/.last-success.tmp" "$STATE_DIR/.last-write.tmp"
-# Bug 3: remove stale staging dirs from prior crashed runs
+# Remove any staging dir not scoped to this run's STAMP — mtime-based cleanup
+# leaks crash dirs from within the last hour, which could shadow the new run.
 if [[ -d "$CLAWD_DIR/skills/_pending/.staging" ]]; then
-  find "$CLAWD_DIR/skills/_pending/.staging" -maxdepth 1 -mindepth 1 -type d -mmin +60 2>/dev/null | xargs -r rm -rf
+  find "$CLAWD_DIR/skills/_pending/.staging" -maxdepth 1 -mindepth 1 -type d ! -name "*-${STAMP}" 2>/dev/null | xargs -r rm -rf
 fi
 
 BACKUP_FILE="$(create_state_backup "$STATE_FILE" "$STAMP")"
@@ -116,10 +117,25 @@ rollback_pending_staging() {
   find "$STAGING_BASE" -maxdepth 1 -type d -name "*-${STAMP}" 2>/dev/null | xargs -r rm -rf
 }
 
+rollback_state_and_write_log() {
+  local reason="$1"
+  if [[ -f "$BACKUP_FILE" ]]; then
+    cp -f "$BACKUP_FILE" "$STATE_FILE"
+  fi
+  rm -f "$WRITE_LOG_DIR/$TODAY.md" "$STATE_FILE.tmp"
+  rollback_pending_staging
+  echo "[skillminer] ROLLBACK: $reason" >> "$LOG"
+}
+
 commit_pending_staging() {
   # Atomically rename staging dirs to final _pending/<slug>/ paths
   while IFS= read -r staging_dir; do
     slug="$(basename "$staging_dir" "-${STAMP}")"
+    if ! validate_slug "$slug" "staging dir"; then
+      echo "[skillminer] ERROR: refusing to commit staging dir with invalid slug: $staging_dir" >> "$LOG"
+      rm -rf "$staging_dir"
+      continue
+    fi
     final_dir="$PENDING_DIR/$slug"
     if [[ -d "$final_dir" ]]; then
       echo "[skillminer] WARN: staging rename skipped, _pending/$slug already exists (collision)" >> "$LOG"
@@ -140,23 +156,20 @@ if [ "$EXIT" -eq 0 ]; then
     VALIDATION_EXIT=2
   elif ! { [ -f "$STATE_FILE.tmp" ] && scrub_file_in_place "$STATE_FILE.tmp"; true; } || ! atomic_json_write "$STATE_FILE.tmp" "$STATE_FILE" "$BACKUP_FILE"; then
     echo "[skillminer] ERROR: morning state tmp failed JSON validation, restored backup" >> "$LOG"
-    rollback_pending_staging
+    rollback_state_and_write_log "state tmp failed JSON validation"
     VALIDATION_EXIT=2
-  elif ! jq -e '.schema_version == "0.2" or .schema_version == "0.3" or .schema_version == "0.4" or .schema_version == "0.5"' "$STATE_FILE" >/dev/null 2>&1; then
-    echo "[skillminer] ERROR: state.json has invalid schema_version after write, restored backup" >> "$LOG"
-    cp "$BACKUP_FILE" "$STATE_FILE"
-    rollback_pending_staging
+  elif ! jq -e '.schema_version == "0.5"' "$STATE_FILE" >/dev/null 2>&1; then
+    echo "[skillminer] ERROR: state.json schema_version not 0.5 — run scripts/migrate-state.sh" >&2
+    echo "[skillminer] ERROR: state.json schema_version not 0.5 after write, restored backup" >> "$LOG"
+    rollback_state_and_write_log "schema_version not 0.5 after write"
     VALIDATION_EXIT=2
   elif ! atomic_text_write "$STATE_DIR/.last-write.tmp" "$STATE_DIR/.last-write"; then
     echo "[skillminer] ERROR: morning .last-write tmp failed non-empty check, restored backup" >> "$LOG"
-    cp "$BACKUP_FILE" "$STATE_FILE"
-    rm -f "$WRITE_LOG_DIR/$TODAY.md"
-    rollback_pending_staging
+    rollback_state_and_write_log ".last-write tmp failed non-empty check"
     VALIDATION_EXIT=2
   elif ! jq -e . "$STATE_FILE" >/dev/null 2>&1; then
     echo "[skillminer] ERROR: morning state validation failed after rename, restored backup" >> "$LOG"
-    cp "$BACKUP_FILE" "$STATE_FILE"
-    rollback_pending_staging
+    rollback_state_and_write_log "final state validation failed after rename"
     VALIDATION_EXIT=2
   else
     commit_pending_staging

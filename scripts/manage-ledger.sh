@@ -263,14 +263,26 @@ case "$cmd" in
 
     [[ "$SCHEMA_VERSION" == "0.3" || "$SCHEMA_VERSION" == "0.4" || "$SCHEMA_VERSION" == "0.5" ]] || die "silence requires schema 0.3 or 0.4 (found $SCHEMA_VERSION)"
 
+    # Require target to exist somewhere in the ledger. Silencing an unknown id
+    # would produce a silenced[] entry with empty intentSummary/triggerPhrases,
+    # violating the semantic-match contract those fields enforce.
+    if ! jq -e --arg id "$id" '
+      [ (.candidates[]? | select(.id == $id))
+      , ((.observations // [])[]? | select(.id == $id))
+      , (.rejected[]? | select(.id == $id))
+      , (.deferred[]? | select(.id == $id))
+      ] | length > 0
+    ' "$STATE" >/dev/null; then
+      echo "error: silence target '$id' not found in candidates/observations/rejected/deferred — use 'show' to list" >&2
+      exit 2
+    fi
+
     if jq -e --arg id "$id" '(.silenced // [])[] | select(.id == $id)' "$STATE" >/dev/null; then
       die "id '$id' already silenced — use unsilence first if you want to change reason"
     fi
 
     # Pull intentSummary + triggerPhrases from wherever the id lives.
     # Search order: candidates[], observations[], rejected[], deferred[].
-    # If not found anywhere, silence still records the id with empty fields
-    # (degenerate case: human wants to pre-silence something before it ever appears).
     write_state '
       ( [ .candidates[]? | select(.id == $id) ]
       + [ (.observations // [])[]? | select(.id == $id) ]
