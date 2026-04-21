@@ -32,6 +32,16 @@
 set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/lib/slug-validate.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/lib/atomic-write.sh"
+
+# Only mutating commands need the lock; 'show' is read-only
+case "${1:-}" in
+  accept|reject|defer|promote|silence|unsilence)
+    if ! acquire_skillminer_lock; then
+      exit 3
+    fi
+    ;;
+esac
 
 die()   { printf 'error: %s\n' "$*" >&2; exit 1; }
 usage() {
@@ -66,8 +76,9 @@ jq -e . "$STATE" >/dev/null 2>&1 || die "state.json is not valid JSON: $STATE"
 # schema guard — accept 0.2 (legacy), 0.3, and 0.4
 SCHEMA_VERSION=$(jq -r '.schema_version // ""' "$STATE")
 case "$SCHEMA_VERSION" in
-  0.2|0.3|0.4) ;;
-  *) die "unsupported schema_version '$SCHEMA_VERSION' — expected 0.2, 0.3, or 0.4" ;;
+  0.5) ;;
+  0.2|0.3|0.4) die "legacy schema_version '$SCHEMA_VERSION' — run 'scripts/migrate-state.sh' to upgrade" ;;
+  *) die "unsupported schema_version '$SCHEMA_VERSION'" ;;
 esac
 
 # atomic-write helper ------------------------------------------------------
@@ -128,24 +139,28 @@ case "$cmd" in
     jq -e --arg id "$id" '.candidates[] | select(.id == $id)' "$STATE" >/dev/null \
       || die "no candidate with id '$id' in candidates[]"
 
-    if jq -e --arg id "$id" '.rejected[] | select(.id == $id)' "$STATE" >/dev/null; then
-      die "id '$id' already in rejected[] — refusing to double-reject"
-    fi
-
     write_state '
-      (.candidates[] | select(.id == $id)) as $c
-      | .rejected += [{
-          id: $c.id,
-          rejectedAt: $today,
-          reason: $reason,
-          intentSummary: ($c.intentSummary // ""),
-          triggerPhrases: ($c.triggerPhrases // [])
-        }]
-      | .candidates |= map(select(.id != $id))
+      .candidates |= map(
+        if .id == $id then
+          .status = "rejected"
+          | .written = false
+          | .rejectedReason = $reason
+          | .rejectedAt = $today
+          | .updatedAt = $now
+        else . end
+      )
       | .last_update = $now
     ' --arg id "$id" --arg reason "$reason" --arg today "$TODAY" --arg now "$NOW"
 
-    echo "ok: rejected '$id'"
+    # Move _pending/<slug> to _rejected/<slug>-<timestamp>/ graveyard
+    pending="$CLAWD_DIR/skills/_pending/$id"
+    if [ -d "$pending" ]; then
+      graveyard="$CLAWD_DIR/skills/_rejected"
+      mkdir -p "$graveyard"
+      mv "$pending" "$graveyard/$id-$(date -u +%Y%m%dT%H%M%SZ)"
+    fi
+
+    echo "rejected: $id"
     ;;
 
   defer)
@@ -183,7 +198,7 @@ case "$cmd" in
     NOW=$(iso_now); TODAY=$(today_utc)
 
     # Require observations-capable schema for promote.
-    [[ "$SCHEMA_VERSION" == "0.3" || "$SCHEMA_VERSION" == "0.4" ]] || die "promote requires schema 0.3 or 0.4 (found $SCHEMA_VERSION)"
+    [[ "$SCHEMA_VERSION" == "0.3" || "$SCHEMA_VERSION" == "0.4" || "$SCHEMA_VERSION" == "0.5" ]] || die "promote requires schema 0.3 or 0.4 (found $SCHEMA_VERSION)"
 
     jq -e --arg id "$id" '(.observations // [])[] | select(.id == $id)' "$STATE" >/dev/null \
       || die "no observation with id '$id' in observations[]"
@@ -246,7 +261,7 @@ case "$cmd" in
     validate_slug "$id" "candidate id" || exit 4
     NOW=$(iso_now); TODAY=$(today_utc)
 
-    [[ "$SCHEMA_VERSION" == "0.3" || "$SCHEMA_VERSION" == "0.4" ]] || die "silence requires schema 0.3 or 0.4 (found $SCHEMA_VERSION)"
+    [[ "$SCHEMA_VERSION" == "0.3" || "$SCHEMA_VERSION" == "0.4" || "$SCHEMA_VERSION" == "0.5" ]] || die "silence requires schema 0.3 or 0.4 (found $SCHEMA_VERSION)"
 
     if jq -e --arg id "$id" '(.silenced // [])[] | select(.id == $id)' "$STATE" >/dev/null; then
       die "id '$id' already silenced — use unsilence first if you want to change reason"
@@ -283,7 +298,7 @@ case "$cmd" in
     validate_slug "$id" "candidate id" || exit 4
     NOW=$(iso_now)
 
-    [[ "$SCHEMA_VERSION" == "0.3" || "$SCHEMA_VERSION" == "0.4" ]] || die "unsilence requires schema 0.3 or 0.4 (found $SCHEMA_VERSION)"
+    [[ "$SCHEMA_VERSION" == "0.3" || "$SCHEMA_VERSION" == "0.4" || "$SCHEMA_VERSION" == "0.5" ]] || die "unsilence requires schema 0.3 or 0.4 (found $SCHEMA_VERSION)"
 
     jq -e --arg id "$id" '(.silenced // [])[] | select(.id == $id)' "$STATE" >/dev/null \
       || die "id '$id' not in silenced[]"

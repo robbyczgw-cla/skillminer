@@ -38,7 +38,7 @@ Slugs must match regex `^[a-z0-9]+(-[a-z0-9]+){1,3}$`. The wrapper validates eve
 Read `$FORGE_DIR/state/state.json`.
 Expected:
 - valid JSON
-- `schema_version == "0.4"`
+- `schema_version == "0.5"`
 - arrays present: `candidates`, `observations`, `rejected`, `deferred`, `silenced`
 
 If validation fails:
@@ -51,6 +51,8 @@ If validation fails:
 Before writing skills, normalize candidates whose `status` was manually changed to `rejected` or `deferred`:
 - copy them into `rejected[]` or `deferred[]`
 - preserve `intentSummary` and `triggerPhrases` when present
+- set `rejectedAt`/`deferredAt` to the candidate's `updatedAt` date if present, else TODAY
+- log the date used and whether it was inferred vs. stamped
 - remove them from `candidates[]`
 - log the sweep
 

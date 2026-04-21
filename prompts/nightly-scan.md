@@ -46,7 +46,7 @@ Use injected values when present. Defaults if missing:
 Read `$FORGE_DIR/state/state.json`.
 Expected:
 - valid JSON
-- `schema_version == "0.4"`
+- `schema_version == "0.5"`
 - arrays present: `candidates`, `observations`, `rejected`, `deferred`, `silenced`
 
 If validation fails:

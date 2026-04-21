@@ -1,4 +1,19 @@
 # Changelog
+## 0.5.0 - 2026-04-21
+- CRITICAL fix: atomic_*_write no longer masks missing tmp as success (returns exit 2, logs error, restores backup)
+- HIGH fix: manage-ledger.sh acquires flock for all mutating commands (accept, reject, defer, promote, silence, unsilence)
+- MEDIUM fix: wrappers validate schema_version after atomic_json_write; invalid version restores backup + exits 2
+- HIGH fix: pre-persistence secret scrubbing via scripts/lib/secret-scrub.sh (applied in both wrappers before atomic_json_write)
+- HIGH fix: reject-path via manage-ledger.sh reject <slug> <reason> — sets status=rejected + rejectedAt + moves _pending/<slug> to _rejected/ graveyard
+- CRITICAL fix: stale state.json.tmp no longer silently promoted over live state — both wrappers rm stale tmps at start-of-run
+- HIGH fix: review-file rollback symmetry — when .last-success/.last-write tmp fails, review/$TODAY.md is also removed to keep state consistent
+- HIGH fix: lock derived from SKILL_DIR sha1sum instead of $USER — consistent across cron (no USER) and interactive shells
+- MEDIUM fix: backup rotation glob restricted to auto-stamp format (8-digit date + 6-digit time + Z) — hand-made snapshots preserved
+- MEDIUM fix: schema_version aligned to 0.5 across manage-ledger + prompts; manage-ledger now rejects legacy 0.2/0.3/0.4 with migration hint
+- MEDIUM fix: sweep + reject CLI always set rejectedAt; skill-writer.md step 3 updated to infer date from updatedAt when stamping rejectedAt/deferredAt
+- New: scripts/migrate-state.sh for 0.4→0.5 migration (no-op fill-in-defaults, bumps schema_version)
+- Security: added README note on secret scrubbing
+
 ## 0.4.4 - 2026-04-19
 - SKILL.md refocused as a professional public skill description
 - Removed internal agent-family references that leaked into the ClawHub-facing description
