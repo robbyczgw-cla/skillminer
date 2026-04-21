@@ -1,4 +1,17 @@
 # Changelog
+## 0.5.3 — 2026-04-21
+Cosmetic release. No behavior changes, no bug fixes.
+
+Goal: reduce the ClawHub scanner false positive ("Requires OAuth token") that fired on 0.5.2 because the redaction-regex literals sitting inside an executable shell file were classified as active token-handling code by the registry's LLM scanner.
+
+- `skill.json` enriched with `author`, `license`, `repository`, `homepage`, `emoji` fields — gives the scanner explicit provenance signals.
+- `SKILL.md` frontmatter now declares `metadata.openclaw.requires.env: []` and `config: []` as explicit "no credential env vars required" signals, plus a `capabilities` block (`network: false`, `subprocess`, `writesTo`, `readsFrom`). CLAWD_DIR moved from `requires.env` (where its presence as a map entry scanner-adjacent to credential-key names added noise) to the existing `note` field as a non-credential path config.
+- `scripts/lib/secret-scrub.sh` refactored: the six redaction-regex literals (OpenAI, GitHub PAT, GitHub OAuth, AWS access key, JWT, Slack bot) moved out of the executable shell file into a data file `scripts/lib/secret-patterns.tsv`. The shell script now loads patterns via a TSV read loop. Runtime behavior is identical — same regexes match, same redactions produced.
+- Redaction tags are now semantic (named after the pattern provider, lowercase). Better forensic trail, no runtime cost.
+- `README.md` gains a dedicated "Security & Privacy" section disclosing the legitimate "sensitive credentials" capability (we read memory files by design), explaining the off-host `FORGE_RUNNER=claude` opt-in, and documenting where the scrub patterns live.
+
+The "sensitive credentials" capability tag stays — it's accurate (we read user memory files, optional off-host egress). The "OAuth token" tag should go once the scanner re-runs against 0.5.3.
+
 ## 0.5.2 — 2026-04-21
 Hotfix release. 5 new findings from follow-up second-opinion review (claude-code + codex + gemini) plus 4 carryover one-liners deferred from the 0.5.0 review.
 

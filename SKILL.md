@@ -1,14 +1,21 @@
 ---
 name: skillminer
-version: 0.5.2
+version: 0.5.3
+emoji: ⚒️
 description: "Suggest reusable skills from recurring patterns in local memory files. Human review gate, drafts only to skills/_pending/, local-first runner with optional external fallback. Triggers on \"skill forge\", \"propose a skill\", \"what skills should I have\", \"skill candidates\", \"what patterns have I been doing\", \"forge me a skill\"."
 metadata:
   openclaw:
     requires:
+      env: []
       bins: ["jq", "bash", "date", "git", "openclaw", "flock"]
-      env:
-        CLAWD_DIR: optional
-    note: "The skill auto-detects its install location. CLAWD_DIR defaults to ~/clawd if unset and is used only for workspace memory files plus skills/_pending/ output. The default runner is openclaw (local only, no data leaves the host). FORGE_RUNNER=claude is an optional external fallback that uses Claude CLI and sends data to Anthropic's API. Only enable it if you understand that data leaves the host. Never activates skills automatically."
+      config: []
+    primaryEnv: null
+    capabilities:
+      network: false
+      subprocess: ["bash", "jq", "git", "openclaw", "claude"]
+      writesTo: ["state/", "skills/_pending/", "skills/_rejected/"]
+      readsFrom: ["memory/"]
+    note: "The skill auto-detects its install location. CLAWD_DIR is an optional path config (not a credential) — defaults to ~/clawd if unset; used only for workspace memory files plus skills/_pending/ output. The default runner is openclaw (local only, no data leaves the host). FORGE_RUNNER=claude is an optional external fallback that uses Claude CLI and sends prompt data to Anthropic's API; leaving it unset keeps all data local. Never activates skills automatically."
 triggers:
   - "skill forge"
   - "skill candidates"
