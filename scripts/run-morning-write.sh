@@ -17,6 +17,8 @@ mkdir -p "$LOG_DIR" "$WRITE_LOG_DIR"
 # shellcheck source=/dev/null
 source "$FORGE_DIR/scripts/lib/atomic-write.sh"
 # shellcheck source=/dev/null
+source "$FORGE_DIR/scripts/lib/secret-scrub.sh"
+# shellcheck source=/dev/null
 source "$FORGE_DIR/scripts/lib/slug-validate.sh"
 if ! acquire_skillminer_lock; then
   exit 3
@@ -25,6 +27,11 @@ fi
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 TODAY="$(date -u +%Y-%m-%d)"
 LOG="$LOG_DIR/write-${TODAY}T$(date -u +%H-%M-%SZ).log"
+
+# Bug 6: remove stale tmps from any prior crashed run before creating a fresh backup
+rm -f "$STATE_FILE.tmp" "$WRITE_LOG_DIR/$TODAY.md.tmp" \
+      "$STATE_DIR/.last-success.tmp" "$STATE_DIR/.last-write.tmp"
+
 BACKUP_FILE="$(create_state_backup "$STATE_FILE" "$STAMP")"
 rotate_state_backups "$STATE_FILE"
 
@@ -102,12 +109,17 @@ if [ "$EXIT" -eq 0 ]; then
     echo "[skillminer] ERROR: morning write-log tmp failed non-empty check, restored backup" >> "$LOG"
     cp "$BACKUP_FILE" "$STATE_FILE"
     VALIDATION_EXIT=2
-  elif ! atomic_json_write "$STATE_FILE.tmp" "$STATE_FILE" "$BACKUP_FILE"; then
+  elif ! { [ -f "$STATE_FILE.tmp" ] && scrub_file_in_place "$STATE_FILE.tmp"; true; } || ! atomic_json_write "$STATE_FILE.tmp" "$STATE_FILE" "$BACKUP_FILE"; then
     echo "[skillminer] ERROR: morning state tmp failed JSON validation, restored backup" >> "$LOG"
+    VALIDATION_EXIT=2
+  elif ! jq -e '.schema_version == "0.2" or .schema_version == "0.3" or .schema_version == "0.4" or .schema_version == "0.5"' "$STATE_FILE" >/dev/null 2>&1; then
+    echo "[skillminer] ERROR: state.json has invalid schema_version after write, restored backup" >> "$LOG"
+    cp "$BACKUP_FILE" "$STATE_FILE"
     VALIDATION_EXIT=2
   elif ! atomic_text_write "$STATE_DIR/.last-write.tmp" "$STATE_DIR/.last-write"; then
     echo "[skillminer] ERROR: morning .last-write tmp failed non-empty check, restored backup" >> "$LOG"
     cp "$BACKUP_FILE" "$STATE_FILE"
+    rm -f "$WRITE_LOG_DIR/$TODAY.md"
     VALIDATION_EXIT=2
   elif ! jq -e . "$STATE_FILE" >/dev/null 2>&1; then
     echo "[skillminer] ERROR: morning state validation failed after rename, restored backup" >> "$LOG"

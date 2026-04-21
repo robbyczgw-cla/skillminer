@@ -2,7 +2,7 @@
 
 > Your AI assistant keeps solving the same problems. skillminer notices — and suggests turning them into reusable skills.
 
-**Version:** 0.4.3 | **Runner:** OpenClaw-native | **Schema:** 0.4
+**Version:** 0.5.0 | **Runner:** OpenClaw-native | **Schema:** 0.5
 
 You build patterns. Every day, in every conversation. skillminer watches your local memory files, spots recurring work, and surfaces the ones worth keeping. No auto-activation, no cloud sync, no noise by default. Just a morning suggestion waiting in your inbox when something actually deserves to become a skill.
 
@@ -98,6 +98,15 @@ forge unsilence <slug>           — undo silence
 forge promote <slug>             — move _pending draft to live skills/
 ```
 
+### Rejecting a bad candidate
+
+When a draft skill in `_pending/` turns out to be noise or misinterpreted intent:
+```
+scripts/manage-ledger.sh reject <slug> "<reason>"
+```
+This moves the draft to `_rejected/<slug>-<timestamp>/`, marks the ledger entry
+`status=rejected`, and stops the nightly scan from flagging it as open work.
+
 ---
 
 ## Configuration
@@ -172,6 +181,7 @@ FORGE_RUNNER=claude CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash scripts/run-night
 - `flock` prevents overlapping scan and write runs from mutating shared state at the same time (0.3.2)
 - State updates use atomic tmp-write promotion with backup rotation and rollback validation (0.3.2)
 - Nightly scan treats memory files as untrusted data, not instructions to execute (0.3.2)
+- Secret scrubbing applied to state + SKILL.md output via conservative regex patterns before atomic promotion (0.5.0)
 
 ---
 
