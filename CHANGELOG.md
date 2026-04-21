@@ -1,4 +1,19 @@
 # Changelog
+## 0.5.2 — 2026-04-21
+Hotfix release. 5 new findings from follow-up second-opinion review (claude-code + codex + gemini) plus 4 carryover one-liners deferred from the 0.5.0 review.
+
+- [HIGH] **morning-write rollback symmetry** — same-class regression of 0.5.1's own headline fix. `run-morning-write.sh` was missed when `rollback_state_and_review` was refactored; three of four post-write-log rollback branches restored state but left the write-log on disk, so cron-announce could summarize skills written against a backup-restored state. Added `rollback_state_and_write_log` helper, called from all 4 post-write-log rollback sites. (Finding A)
+- [MEDIUM] **commit_pending_staging path escape** — staging dir names were stripped to slugs via `basename "$dir" "-$STAMP"` and used as `_pending/<slug>` targets without validation, so `_pending/.staging/..-$STAMP/` resolved to `$CLAWD_DIR/skills/`. Gated with `validate_slug`; invalid staging dirs are logged and removed. (Finding B)
+- [LOW] **rollback preserves timestamped backup** — `rollback_state_and_review` used `mv -f` to restore from `.bak.<STAMP>`, destroying the forensic snapshot on every rollback and silently shrinking the 7-entry retention. Changed to `cp -f`. Same pattern applied in the new morning-write helper. (Finding C)
+- [LOW] **migrate-state.sh non-blocking flock** — blocking `flock -x` on a valid FD never fails on contention, so `migrate-state.sh` would hang indefinitely behind a lock-holding wrapper with no user-facing message. Added `-n` and a contention error; exit 3 matches the wrapper convention. (Finding D)
+- [LOW] **staging cleanup scoped to run stamp** — pre-run 60-minute age-based cleanup could leak staging dirs from crashes within the last hour, shadowing a same-slug new run. Switched to stamp scope: any dir not matching the current `$STAMP` is cleared regardless of age. (Finding E)
+- [MEDIUM] **Carryover #5 — PEM body redacted** — `secret-scrub.sh` only matched PEM BEGIN/END markers, leaving the base64 body (the actual secret material) intact. Rewritten as a multiline BEGIN..END block replacement collapsing the whole range to a single `[REDACTED:PEM]`.
+- [MEDIUM] **Carryover #7 — date-only rejectedAt/deferredAt in sweep** — `prompts/skill-writer.md` step 3 was ambiguous about copying `updatedAt` verbatim vs. extracting its date portion; LLM stamping ISO-8601 would pass JSON validation but fail cooldown comparisons against `date +%F`. Prompt now explicitly specifies `YYYY-MM-DD` extraction via `T` split. CLI (`manage-ledger.sh reject|defer`) was already correct.
+- [LOW] **Carryover #8 — wrapper schema whitelist tightened to 0.5** — both `run-nightly-scan.sh` and `run-morning-write.sh` accepted `0.2|0.3|0.4|0.5` in the post-write schema check, inconsistent with `manage-ledger.sh`. Wrappers now only accept `0.5` and emit the same migration hint on reject.
+- [LOW] **Carryover #9 — silence rejects unknown id** — `manage-ledger.sh silence <unknown-id>` would write a `silenced[]` entry with empty `intentSummary`/`triggerPhrases`, breaking the semantic-match contract those fields enforce. Pre-check requires the target to exist in candidates/observations/rejected/deferred; exits 2 otherwise. The other mutating commands (accept/reject/defer/promote/unsilence) already had their id-exists guards — verified as part of this pass.
+
+Deferred to 0.6: Finding 6 (redaction marker in triggerPhrases reactivating skills), Finding 10 (SKILL.md description/trigger drift). CI harness (shellcheck + bats) also deferred to 0.6.
+
 ## 0.5.1 — 2026-04-21
 Hotfix release. 4 defects surfaced by external second-opinion review (3 LLMs: claude-code + codex + gemini).
 

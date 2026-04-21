@@ -113,7 +113,7 @@ rm -f "$PROMPT_FILE"
 rollback_state_and_review() {
   local reason="$1"
   if [[ -f "$BACKUP_FILE" ]]; then
-    mv -f "$BACKUP_FILE" "$STATE_FILE"
+    cp -f "$BACKUP_FILE" "$STATE_FILE"
   fi
   rm -f "$REVIEW_DIR/$TODAY.md"
   rm -f "$STATE_FILE.tmp"
@@ -131,9 +131,10 @@ if [ "$EXIT" -eq 0 ]; then
     echo "[skillminer] ERROR: nightly state tmp failed JSON validation, restored backup" >> "$LOG"
     rollback_state_and_review "state tmp failed JSON validation"
     VALIDATION_EXIT=2
-  elif ! jq -e '.schema_version == "0.2" or .schema_version == "0.3" or .schema_version == "0.4" or .schema_version == "0.5"' "$STATE_FILE" >/dev/null 2>&1; then
-    echo "[skillminer] ERROR: state.json has invalid schema_version after write, restored backup" >> "$LOG"
-    rollback_state_and_review "invalid schema_version after write"
+  elif ! jq -e '.schema_version == "0.5"' "$STATE_FILE" >/dev/null 2>&1; then
+    echo "[skillminer] ERROR: state.json schema_version not 0.5 — run scripts/migrate-state.sh" >&2
+    echo "[skillminer] ERROR: state.json schema_version not 0.5 after write, restored backup" >> "$LOG"
+    rollback_state_and_review "schema_version not 0.5 after write"
     VALIDATION_EXIT=2
   elif ! atomic_text_write "$STATE_DIR/.last-success.tmp" "$STATE_DIR/.last-success"; then
     echo "[skillminer] ERROR: nightly .last-success tmp failed non-empty check, restored backup" >> "$LOG"
