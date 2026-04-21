@@ -15,6 +15,14 @@ STATE="${1:-$SKILL_DIR/state/state.json}"
 [[ -f "$STATE" ]] || { echo "error: state file not found: $STATE" >&2; exit 1; }
 command -v jq >/dev/null || { echo "error: jq is required" >&2; exit 1; }
 
+# Bug 4: acquire the same skillminer lock as manage-ledger.sh to prevent races
+LOCK_NAME="/tmp/skillminer-$(cd "$SKILL_DIR" && pwd | sha1sum | cut -c1-16).lock"
+exec 200>"$LOCK_NAME"
+flock -x 200 || { echo "error: could not acquire skillminer lock ($LOCK_NAME)" >&2; exit 2; }
+
+# Bug 4: stale-tmp cleanup (belt and suspenders — same pattern as manage-ledger)
+rm -f "${STATE}.tmp"
+
 CURRENT_VERSION=$(jq -r '.schema_version // ""' "$STATE")
 
 case "$CURRENT_VERSION" in

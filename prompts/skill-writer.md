@@ -96,7 +96,7 @@ Do not invent or add steps from citations.
 - If `_pending/<slug>/SKILL.md` already exists:
   - if it appears to describe the same skill, treat as idempotent no-op and mark written
   - if it looks different, log a collision warning and skip writing
-- Create `_pending/` if needed.
+- Create `_pending/.staging/` if needed.
 
 ### 9) Generate SKILL.md
 Structure must be exactly:
@@ -161,8 +161,9 @@ If any check fails, treat it as refinement-needed instead of writing.
 
 ### 11) Write files
 For each validated candidate:
-- write `_pending/<slug>/SKILL.md`
-- write `_pending/<slug>/FORGED-BY.md` with provenance details
+- Write to the staging path `_pending/.staging/<slug>-$SKILLMINER_WRITE_STAMP/` (use the injected `SKILLMINER_WRITE_STAMP`). The wrapper atomically renames to `_pending/<slug>/` after state commits; staging dirs are removed on rollback.
+- write `_pending/.staging/<slug>-$SKILLMINER_WRITE_STAMP/SKILL.md`
+- write `_pending/.staging/<slug>-$SKILLMINER_WRITE_STAMP/FORGED-BY.md` with provenance details
 - update candidate fields:
   - `written: true`
   - `writtenAt: NOW`

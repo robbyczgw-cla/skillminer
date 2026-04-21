@@ -110,28 +110,38 @@ set -e
 
 rm -f "$PROMPT_FILE"
 
+rollback_state_and_review() {
+  local reason="$1"
+  if [[ -f "$BACKUP_FILE" ]]; then
+    mv -f "$BACKUP_FILE" "$STATE_FILE"
+  fi
+  rm -f "$REVIEW_DIR/$TODAY.md"
+  rm -f "$STATE_FILE.tmp"
+  echo "[skillminer] ROLLBACK: $reason" >> "$LOG"
+}
+
 VALIDATION_EXIT=0
 FINAL_EXIT="$EXIT"
 if [ "$EXIT" -eq 0 ]; then
   if ! atomic_text_write "$REVIEW_DIR/$TODAY.md.tmp" "$REVIEW_DIR/$TODAY.md"; then
     echo "[skillminer] ERROR: nightly review tmp failed non-empty check, keeping previous state" >> "$LOG"
-    cp "$BACKUP_FILE" "$STATE_FILE"
+    rollback_state_and_review "review tmp failed non-empty check"
     VALIDATION_EXIT=2
   elif ! { [ -f "$STATE_FILE.tmp" ] && scrub_file_in_place "$STATE_FILE.tmp"; true; } || ! atomic_json_write "$STATE_FILE.tmp" "$STATE_FILE" "$BACKUP_FILE"; then
     echo "[skillminer] ERROR: nightly state tmp failed JSON validation, restored backup" >> "$LOG"
+    rollback_state_and_review "state tmp failed JSON validation"
     VALIDATION_EXIT=2
   elif ! jq -e '.schema_version == "0.2" or .schema_version == "0.3" or .schema_version == "0.4" or .schema_version == "0.5"' "$STATE_FILE" >/dev/null 2>&1; then
     echo "[skillminer] ERROR: state.json has invalid schema_version after write, restored backup" >> "$LOG"
-    cp "$BACKUP_FILE" "$STATE_FILE"
+    rollback_state_and_review "invalid schema_version after write"
     VALIDATION_EXIT=2
   elif ! atomic_text_write "$STATE_DIR/.last-success.tmp" "$STATE_DIR/.last-success"; then
     echo "[skillminer] ERROR: nightly .last-success tmp failed non-empty check, restored backup" >> "$LOG"
-    cp "$BACKUP_FILE" "$STATE_FILE"
-    rm -f "$REVIEW_DIR/$TODAY.md"
+    rollback_state_and_review ".last-success tmp failed non-empty check"
     VALIDATION_EXIT=2
   elif ! jq -e . "$STATE_FILE" >/dev/null 2>&1; then
     echo "[skillminer] ERROR: nightly state validation failed after rename, restored backup" >> "$LOG"
-    cp "$BACKUP_FILE" "$STATE_FILE"
+    rollback_state_and_review "final state validation failed after rename"
     VALIDATION_EXIT=2
   fi
 fi

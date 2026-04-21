@@ -1,4 +1,12 @@
 # Changelog
+## 0.5.1 — 2026-04-21
+Hotfix release. 4 defects surfaced by external second-opinion review (3 LLMs: claude-code + codex + gemini).
+
+- [CRIT] **setup.sh installs schema-0.4 template** — every fresh install broken on first `manage-ledger` call. Bumped `state-template.json` schema_version to `0.5`.
+- [HIGH] **rollback symmetry in run-nightly-scan.sh** — `rm -f review/$TODAY.md` was only in 1 of 5 rollback branches. Factored into `rollback_state_and_review()` called from all rollback sites.
+- [HIGH] **`_pending/<slug>/` orphaned on state rollback** — morning-write now stages writes to `_pending/.staging/<slug>-$STAMP/` and only renames to final path after state commits. Rollback cleans staging dirs.
+- [HIGH] **migrate-state.sh acquired no skillminer lock** — races with cron-scheduled wrappers possible. Now uses same hash-derived flock lock as manage-ledger.sh, plus stale-tmp cleanup.
+
 ## 0.5.0 - 2026-04-21
 - CRITICAL fix: atomic_*_write no longer masks missing tmp as success (returns exit 2, logs error, restores backup)
 - HIGH fix: manage-ledger.sh acquires flock for all mutating commands (accept, reject, defer, promote, silence, unsilence)
