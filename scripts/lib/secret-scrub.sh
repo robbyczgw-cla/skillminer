@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # secret-scrub.sh — regex-based redaction of common secret patterns
 
-# Patterns to redact. Extend conservatively — false positives are preferable to leaks.
+# Single-line patterns. Extend conservatively — false positives are preferable to leaks.
+# PEM blocks are handled separately as a multiline BEGIN..END range because header-only
+# redaction would leave the base64 body (the actual secret material) on disk.
 SKILLMINER_SECRET_PATTERNS=(
   '(sk-[a-zA-Z0-9]{20,})'                    # OpenAI-style
   '(ghp_[a-zA-Z0-9]{36,})'                   # GitHub personal access
@@ -9,14 +11,17 @@ SKILLMINER_SECRET_PATTERNS=(
   '(AKIA[0-9A-Z]{16})'                       # AWS access key ID
   '(eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+)'  # JWT
   '(xoxb-[0-9]+-[0-9]+-[a-zA-Z0-9]+)'        # Slack bot
-  '(-----BEGIN [A-Z ]+PRIVATE KEY-----)'     # PEM
 )
 
 # Usage: scrub_stream < input > output   (stdin → stdout)
-# Replaces each match with [REDACTED:pattern-index]
+# Replaces PEM blocks with [REDACTED:PEM], single-line matches with [REDACTED:<idx>].
 scrub_stream() {
   local input
   input="$(cat)"
+  # Multiline PEM block replacement (whole BEGIN..END range, body included).
+  # GNU sed collapses the c\ replacement to a single output line per range.
+  input="$(printf '%s' "$input" | sed -E '/-----BEGIN [A-Z ]+-----/,/-----END [A-Z ]+-----/c\
+[REDACTED:PEM]')"
   local i=0
   for pattern in "${SKILLMINER_SECRET_PATTERNS[@]}"; do
     input="$(printf '%s' "$input" | sed -E "s#$pattern#[REDACTED:$i]#g")"

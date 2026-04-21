@@ -15,10 +15,15 @@ STATE="${1:-$SKILL_DIR/state/state.json}"
 [[ -f "$STATE" ]] || { echo "error: state file not found: $STATE" >&2; exit 1; }
 command -v jq >/dev/null || { echo "error: jq is required" >&2; exit 1; }
 
-# Bug 4: acquire the same skillminer lock as manage-ledger.sh to prevent races
+# Bug 4: acquire the same skillminer lock as manage-ledger.sh to prevent races.
+# Non-blocking: if another process holds the lock, fail fast — blocking flock on a
+# valid FD never fails on contention, which would silently hang migrate indefinitely.
 LOCK_NAME="/tmp/skillminer-$(cd "$SKILL_DIR" && pwd | sha1sum | cut -c1-16).lock"
 exec 200>"$LOCK_NAME"
-flock -x 200 || { echo "error: could not acquire skillminer lock ($LOCK_NAME)" >&2; exit 2; }
+if ! flock -n -x 200; then
+  echo "error: skillminer lock held by another process ($LOCK_NAME) — wait for it to finish, then retry" >&2
+  exit 3
+fi
 
 # Bug 4: stale-tmp cleanup (belt and suspenders — same pattern as manage-ledger)
 rm -f "${STATE}.tmp"
