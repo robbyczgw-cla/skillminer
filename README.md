@@ -2,7 +2,7 @@
 
 > Your AI assistant keeps solving the same problems. skillminer notices — and suggests turning them into reusable skills.
 
-**Version:** 0.5.2 | **Runner:** OpenClaw-native | **Schema:** 0.5
+**Version:** 0.5.3 | **Runner:** OpenClaw-native | **Schema:** 0.5
 
 You build patterns. Every day, in every conversation. skillminer watches your local memory files, spots recurring work, and surfaces the ones worth keeping. No auto-activation, no cloud sync, no noise by default. Just a morning suggestion waiting in your inbox when something actually deserves to become a skill.
 
@@ -175,13 +175,35 @@ FORGE_RUNNER=claude CLAWD_DIR="${CLAWD_DIR:-$HOME/clawd}" bash scripts/run-night
 
 ---
 
-## Security
+## Security &amp; Privacy
+
+skillminer reads local memory files under `$CLAWD_DIR/memory/` to detect
+recurring work patterns. This is its core function.
+
+ClawHub labels this capability as "sensitive credentials" — that label is
+accurate and intended. Your memory files may contain anything you've written
+to your agent; skillminer indexes them locally to surface reusable patterns.
+
+**Off-host data flow:** the optional `FORGE_RUNNER=claude` path sends prompt
+data to Anthropic's API. Off by default. Only enable if you understand that
+data leaves the host.
+
+**Secret scrubbing:** state writes pass through regex-based redaction for PEM
+blocks and OpenAI / GitHub (PAT + OAuth) / AWS / JWT / Slack token shapes
+before disk persistence. Patterns live in `scripts/lib/secret-patterns.tsv`
+and are applied by `scripts/lib/secret-scrub.sh`. This is defense-in-depth,
+not a promise — don't rely on it as your only safeguard.
+
+**No OAuth flow, no network auth tokens, no credential storage of any kind
+in skillminer itself.**
+
+### Hardening
 
 - Slugs are regex-validated before any filesystem path is derived from them (0.4.2)
 - `flock` prevents overlapping scan and write runs from mutating shared state at the same time (0.3.2)
 - State updates use atomic tmp-write promotion with backup rotation and rollback validation (0.3.2)
 - Nightly scan treats memory files as untrusted data, not instructions to execute (0.3.2)
-- Secret scrubbing applied to state + SKILL.md output via conservative regex patterns before atomic promotion (0.5.0)
+- Secret scrubbing applied to state + SKILL.md output via conservative regex patterns before atomic promotion (0.5.0); patterns externalized to `secret-patterns.tsv` (0.5.3)
 
 ---
 
