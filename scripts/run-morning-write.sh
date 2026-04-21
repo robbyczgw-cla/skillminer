@@ -31,6 +31,10 @@ LOG="$LOG_DIR/write-${TODAY}T$(date -u +%H-%M-%SZ).log"
 # Bug 6: remove stale tmps from any prior crashed run before creating a fresh backup
 rm -f "$STATE_FILE.tmp" "$WRITE_LOG_DIR/$TODAY.md.tmp" \
       "$STATE_DIR/.last-success.tmp" "$STATE_DIR/.last-write.tmp"
+# Bug 3: remove stale staging dirs from prior crashed runs
+if [[ -d "$CLAWD_DIR/skills/_pending/.staging" ]]; then
+  find "$CLAWD_DIR/skills/_pending/.staging" -maxdepth 1 -mindepth 1 -type d -mmin +60 2>/dev/null | xargs -r rm -rf
+fi
 
 BACKUP_FILE="$(create_state_backup "$STATE_FILE" "$STAMP")"
 rotate_state_backups "$STATE_FILE"
@@ -60,7 +64,9 @@ PROMPT_FILE="$(mktemp /tmp/forge-write-prompt.XXXXXX.md)"
     "$CLAWD_DIR"
   printf '> `FORGE_DIR=%s` — use this as the authoritative installed skill path throughout; do not derive it from `CLAWD_DIR`.\n' \
     "$FORGE_DIR"
-  printf '> `scan.maxBudgetUsd=%s` — use this for any Claude fallback budget reference.\n\n' "$MAX_BUDGET_USD"
+  printf '> `scan.maxBudgetUsd=%s` — use this for any Claude fallback budget reference.\n' "$MAX_BUDGET_USD"
+  printf '> `SKILLMINER_WRITE_STAMP=%s` — staging stamp for this run. Write each pending skill to `_pending/.staging/<slug>-%s/` instead of `_pending/<slug>/` directly. The wrapper will atomically rename staging dirs to final paths after state commits, or remove them on rollback.\n\n' \
+    "$STAMP" "$STAMP"
   cat "$FORGE_DIR/prompts/skill-writer.md"
 } > "$PROMPT_FILE"
 
@@ -102,29 +108,58 @@ set -e
 
 rm -f "$PROMPT_FILE"
 
+PENDING_DIR="$CLAWD_DIR/skills/_pending"
+STAGING_BASE="$PENDING_DIR/.staging"
+
+rollback_pending_staging() {
+  # Remove any staging dirs left by this run
+  find "$STAGING_BASE" -maxdepth 1 -type d -name "*-${STAMP}" 2>/dev/null | xargs -r rm -rf
+}
+
+commit_pending_staging() {
+  # Atomically rename staging dirs to final _pending/<slug>/ paths
+  while IFS= read -r staging_dir; do
+    slug="$(basename "$staging_dir" "-${STAMP}")"
+    final_dir="$PENDING_DIR/$slug"
+    if [[ -d "$final_dir" ]]; then
+      echo "[skillminer] WARN: staging rename skipped, _pending/$slug already exists (collision)" >> "$LOG"
+    else
+      mv "$staging_dir" "$final_dir"
+      echo "[skillminer] staged _pending/$slug committed" >> "$LOG"
+    fi
+  done < <(find "$STAGING_BASE" -maxdepth 1 -type d -name "*-${STAMP}" 2>/dev/null)
+}
+
 VALIDATION_EXIT=0
 FINAL_EXIT="$EXIT"
 if [ "$EXIT" -eq 0 ]; then
   if ! atomic_text_write "$WRITE_LOG_DIR/$TODAY.md.tmp" "$WRITE_LOG_DIR/$TODAY.md"; then
     echo "[skillminer] ERROR: morning write-log tmp failed non-empty check, restored backup" >> "$LOG"
     cp "$BACKUP_FILE" "$STATE_FILE"
+    rollback_pending_staging
     VALIDATION_EXIT=2
   elif ! { [ -f "$STATE_FILE.tmp" ] && scrub_file_in_place "$STATE_FILE.tmp"; true; } || ! atomic_json_write "$STATE_FILE.tmp" "$STATE_FILE" "$BACKUP_FILE"; then
     echo "[skillminer] ERROR: morning state tmp failed JSON validation, restored backup" >> "$LOG"
+    rollback_pending_staging
     VALIDATION_EXIT=2
   elif ! jq -e '.schema_version == "0.2" or .schema_version == "0.3" or .schema_version == "0.4" or .schema_version == "0.5"' "$STATE_FILE" >/dev/null 2>&1; then
     echo "[skillminer] ERROR: state.json has invalid schema_version after write, restored backup" >> "$LOG"
     cp "$BACKUP_FILE" "$STATE_FILE"
+    rollback_pending_staging
     VALIDATION_EXIT=2
   elif ! atomic_text_write "$STATE_DIR/.last-write.tmp" "$STATE_DIR/.last-write"; then
     echo "[skillminer] ERROR: morning .last-write tmp failed non-empty check, restored backup" >> "$LOG"
     cp "$BACKUP_FILE" "$STATE_FILE"
     rm -f "$WRITE_LOG_DIR/$TODAY.md"
+    rollback_pending_staging
     VALIDATION_EXIT=2
   elif ! jq -e . "$STATE_FILE" >/dev/null 2>&1; then
     echo "[skillminer] ERROR: morning state validation failed after rename, restored backup" >> "$LOG"
     cp "$BACKUP_FILE" "$STATE_FILE"
+    rollback_pending_staging
     VALIDATION_EXIT=2
+  else
+    commit_pending_staging
   fi
 fi
 if [ "$VALIDATION_EXIT" -ne 0 ]; then
