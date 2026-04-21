@@ -1,8 +1,8 @@
 {
-  "schema_version": "0.4",
-  "last_scan": "2026-04-19T02:02:25Z",
-  "last_write": "2026-04-19T08:00:37Z",
-  "last_update": "2026-04-19T08:06:29Z",
+  "schema_version": "0.5",
+  "last_scan": "2026-04-21T02:01:34Z",
+  "last_write": "2026-04-21T08:01:20Z",
+  "last_update": "2026-04-21T09:57:32Z",
   "candidates": [
     {
       "id": "verify-bindings-post-patch",
@@ -18,7 +18,7 @@
       ],
       "occurrences": 6,
       "confidence": "low",
-      "status": "accepted",
+      "status": "rejected",
       "written": false,
       "triggerPhrases": [
         "warum wird die binding config immer überschrieben WTF",
@@ -43,50 +43,26 @@
         "memory/2026-04-09.md",
         "memory/2026-04-09-copilot-token-fix.md"
       ],
-      "rejectedReason": null,
+      "rejectedReason": "Human review 2026-04-20: triggers are historical rant phrases (WTF outbursts, typo Tefy), not natural invocation language. Drafted SKILL.md references unverified gateway commands. Dropped 2026-04-21.",
       "resurfacedFrom": null,
       "resurfacedFromDate": null,
       "createdAt": "2026-04-17T16:37:48Z",
-      "updatedAt": "2026-04-19T08:06:29Z"
+      "updatedAt": "2026-04-21T08:25:31Z",
+      "writtenAt": "2026-04-20T08:01:13Z",
+      "rejectedAt": "2026-04-20"
     }
   ],
   "observations": [
     {
-      "id": "gh-copilot-token-sync",
-      "intentSummary": "When the GitHub Copilot OAuth token refreshes, copy the new token into all three agent auth-profile files (main, gh-sonnet, gh-haiku) to prevent agents from silently falling back to the wrong model.",
-      "occurrences": 2,
-      "previousOccurrences": null,
-      "daysSeen": [
-        "2026-04-09"
-      ],
-      "previousDays": null,
-      "lastSeen": "2026-04-09",
-      "triggerPhrases": [
-        "gh-sonnet antwortete mit MiMo statt Claude Sonnet 4.6",
-        "Bei nächstem OAuth Token-Refresh muss das neue Token in alle 3 Auth-Files"
-      ],
-      "sourceCitations": [
-        "memory/2026-04-09.md",
-        "memory/2026-04-09-copilot-token-fix.md"
-      ],
-      "proposedSteps": [
-        "Check current token in main/agent/auth-profiles.json for github-copilot provider.",
-        "Copy token into gh-sonnet/agent/auth-profiles.json and gh-haiku/agent/auth-profiles.json.",
-        "Restart gateway.",
-        "Confirm all three agents respond with the correct model (claude-sonnet-4.6 / claude-haiku-4-5)."
-      ],
-      "reason": "Only 1 distinct day — sub-threshold. Watch: if the next OAuth refresh repeats the same manual sync, this will qualify on the next scan."
-    },
-    {
       "id": "review-opencami-pr",
       "intentSummary": "Review and decide on incoming external PRs to the OpenCami repository, including applying minor fixes before merging or rejecting oversized PRs.",
       "occurrences": 3,
-      "previousOccurrences": null,
+      "previousOccurrences": 3,
       "daysSeen": [
         "2026-04-14",
         "2026-04-17"
       ],
-      "previousDays": null,
+      "previousDays": 2,
       "lastSeen": "2026-04-17",
       "triggerPhrases": [
         "pr16 sinnvoll mergen oder nicht?",
@@ -98,25 +74,47 @@
         "memory/2026-04-17.md"
       ],
       "proposedSteps": [],
-      "reason": "Only 2 distinct days; no new activity in the extended window; coverage overlap with pr-pipeline and github-issue-fixer. Pattern fading — may drop from observations next scan if no recurrence."
+      "reason": "Only 2 distinct days; no new activity in extended window; coverage overlap with pr-pipeline and github-issue-fixer. Pattern fading — likely drops next scan if no recurrence."
+    },
+    {
+      "id": "tefy-config-check",
+      "intentSummary": "Periodically verify the Tefy agent config, binding, model, sandbox settings, and last-session time to confirm the agent is running correctly.",
+      "occurrences": 2,
+      "previousOccurrences": null,
+      "daysSeen": [
+        "2026-04-16",
+        "2026-04-20"
+      ],
+      "previousDays": null,
+      "lastSeen": "2026-04-20",
+      "triggerPhrases": [
+        "Tefy Binding Verified",
+        "Tefy agent und telegram Channel alles gut? Checke Funktion keine Inhalte"
+      ],
+      "sourceCitations": [
+        "memory/2026-04-16.md",
+        "memory/2026-04-20.md"
+      ],
+      "proposedSteps": [],
+      "reason": "Only 2 occurrences across 2 days — below minOccurrences floor of 3. Watch: if it recurs on a third day, may qualify."
     }
   ],
   "rejected": [],
   "deferred": [],
   "silenced": [],
-  "notes": "Ledger for skillminer. Every nightly scan mutates `candidates[]`, replaces `observations[]`, sets `last_scan`. `rejected[]` and `deferred[]` block re-proposal for 30 days via semantic (not just slug) match — entries REQUIRE `intentSummary` and `triggerPhrases`. `silenced[]` blocks re-proposal permanently (no expiry). `observations[]` is scan-scoped — fully replaced each scan with the current scan's sub-threshold patterns; a human can run `manage-ledger.sh promote <id>` to pull one into `candidates[]` as pending. Preferred mutation path: `scripts/manage-ledger.sh accept|reject|defer|promote|silence|unsilence <id> [reason]` — deterministic, atomic, copies required fields. Hand-editing state.json also works: set `status` on the candidate to accepted/rejected/deferred and the scan prompt (Step 3) + morning-write sweep both respect the new state.",
+  "notes": "Ledger for skillminer. Every nightly scan mutates `candidates[]`, replaces `observations[]`, sets `last_scan`. `rejected[]` and `deferred[]` block re-proposal for 30 days via semantic (not just slug) match — entries REQUIRE `intentSummary` and `triggerPhrases`. `silenced[]` blocks re-proposal permanently (no expiry). `observations[]` is scan-scoped — fully replaced each scan with the current scan's sub-threshold patterns; a human can run `manage-ledger.sh promote <id>` to pull one into `candidates[]` as pending. Preferred mutation path: `scripts/manage-ledger.sh accept|reject|defer|promote|silence|unsilence <id> [reason]`.",
   "_schema": {
     "candidate": {
       "id": "kebab-case-slug",
       "type": "skill_candidate",
-      "intentSummary": "one-sentence description of the underlying task (used for semantic cooldown matching)",
+      "intentSummary": "one-sentence description (used for semantic cooldown matching)",
       "firstSeen": "YYYY-MM-DD",
       "lastSeen": "YYYY-MM-DD",
       "daysSeen": [
         "YYYY-MM-DD"
       ],
-      "occurrences": "integer — COUNT IN THE MOST RECENT SCAN WINDOW (not cumulative lifetime)",
-      "confidence": "high|medium|low — set at initial proposal, never mutated by later scans",
+      "occurrences": "integer — COUNT IN THE MOST RECENT SCAN WINDOW",
+      "confidence": "high|medium|low",
       "status": "pending|accepted|written|rejected|deferred",
       "written": false,
       "triggerPhrases": [
@@ -125,7 +123,7 @@
       "proposedSteps": [
         "..."
       ],
-      "coverageRisk": "true when a capability-overlapping skill exists but no trigger-level duplicate",
+      "coverageRisk": "bool",
       "coverageOverlaps": [
         "skill-names-if-coverageRisk"
       ],
@@ -141,48 +139,21 @@
     "observation": {
       "id": "kebab-case-slug",
       "intentSummary": "one-sentence description",
-      "occurrences": "integer — count in current scan window",
-      "previousOccurrences": "null | integer — prior scan's observation count for the same semantic pattern; null means new or legacy data without trend history",
+      "occurrences": "integer",
+      "previousOccurrences": "integer | null",
       "daysSeen": [
         "YYYY-MM-DD"
       ],
-      "previousDays": "null | integer — prior scan's distinct-day count for the same semantic pattern; null means new or legacy data without trend history",
+      "previousDays": "integer | null",
       "lastSeen": "YYYY-MM-DD",
       "triggerPhrases": [
-        "verbatim quotes from memory"
+        "verbatim quotes"
       ],
-      "proposedSteps": "optional — may be empty",
       "sourceCitations": [
         "memory/YYYY-MM-DD.md"
       ],
-      "reason": "why this did not qualify"
-    },
-    "rejected": {
-      "id": "kebab-case-slug",
-      "rejectedAt": "YYYY-MM-DD",
-      "reason": "why-human-said-no",
-      "intentSummary": "REQUIRED for semantic cooldown matching",
-      "triggerPhrases": [
-        "REQUIRED"
-      ]
-    },
-    "deferred": {
-      "id": "kebab-case-slug",
-      "deferredAt": "YYYY-MM-DD",
-      "reason": "why-human-said-not-yet",
-      "intentSummary": "REQUIRED for semantic cooldown matching",
-      "triggerPhrases": [
-        "REQUIRED"
-      ]
-    },
-    "silenced": {
-      "id": "kebab-case-slug",
-      "silencedAt": "YYYY-MM-DD",
-      "reason": "why-this-pattern-is-permanently-off",
-      "intentSummary": "REQUIRED for semantic silence matching",
-      "triggerPhrases": [
-        "REQUIRED"
-      ]
+      "proposedSteps": "optional",
+      "reason": "why below threshold"
     }
   }
 }
