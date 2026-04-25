@@ -216,3 +216,7 @@ See [USER_GUIDE.md](USER_GUIDE.md) for the complete walkthrough.
 ## License
 
 MIT
+
+## Download History
+
+[![Download History](https://skill-history.com/chart/robbyczgw-cla/skillminer.svg)](https://skill-history.com/robbyczgw-cla/skillminer)
